@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #ifndef FOS_KERN_KHEAP_H_
 #define FOS_KERN_KHEAP_H_
 
@@ -47,7 +46,6 @@ uint32 start,brk,end;
 
 
 #endif // FOS_KERN_KHEAP_H_
-=======
 #ifndef FOS_KERN_KHEAP_H_
 #define FOS_KERN_KHEAP_H_
 
@@ -95,4 +93,3 @@ int numOfKheapVACalls ;
 
 
 #endif // FOS_KERN_KHEAP_H_
->>>>>>> b3dc1533cbc4a488d409915c262e123b6a2e8c86
