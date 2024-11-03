@@ -10,11 +10,42 @@
 //Return:
 //	On success: 0
 //	Otherwise (if no memory OR initial size exceed the given limit): E_NO_MEM
-int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
-{
+int initialize_kheap_dynamic_allocator(uint32 daStart,
+		uint32 initSizeToAllocate, uint32 daLimit) {
 	//[PROJECT'24.MS2] [USER HEAP - KERNEL SIDE] initialize_kheap_dynamic_allocator
 	// Write your code here, remove the panic and write your code
-	panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+	//panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+
+	if ((daStart + initSizeToAllocate) > daLimit
+			|| (daLimit - daStart) < initSizeToAllocate) {
+		panic("No memory or initial size exceeds the given limit");
+	}
+	start = daStart;
+	brk = daStart + initSizeToAllocate;
+	end = daLimit;
+
+	int numOfPages = ROUNDUP(initSizeToAllocate, PAGE_SIZE) / PAGE_SIZE;
+
+	for (int i = 0; i < numOfPages; i++) {
+		uint32 currAddress = daStart + i * PAGE_SIZE;
+
+		struct FrameInfo *frameInfo;
+		int res = allocate_frame(&frameInfo);
+		if (res != 0) {
+			panic("Failed to allocate frame");
+		}
+
+		uint32* page_table;
+		//cprintf("2 done\n");
+		if (get_page_table(ptr_page_directory, currAddress, &page_table) == TABLE_NOT_EXIST) {
+		    create_page_table(ptr_page_directory, currAddress);
+		}
+		map_frame(ptr_page_directory, frameInfo, currAddress, PERM_WRITEABLE | PERM_PRESENT);
+	}
+
+	initialize_dynamic_allocator(daStart, initSizeToAllocate);
+	//cprintf("4 done\n");
+	return 0;
 }
 
 void* sbrk(int numOfPages)
