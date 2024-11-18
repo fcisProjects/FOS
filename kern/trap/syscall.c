@@ -342,7 +342,7 @@ uint32 sys_is_frame_free(uint32 virtual_address){
 	uint32* page_table = NULL;
 	    struct FrameInfo* frame = get_frame_info(ptr_page_directory, virtual_address, &page_table);
 	    if (frame == NULL)
-	        return 1; // Not mapped
+	        return 1;
 	    return 0;
 }
 

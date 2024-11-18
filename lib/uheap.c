@@ -24,8 +24,8 @@ void* malloc(uint32 size) {
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
-	panic("malloc() is not implemented yet...!!");
-	/*sys_isUHeapPlacementStrategyFIRSTFIT();
+	//panic("malloc() is not implemented yet...!!");
+	sys_isUHeapPlacementStrategyFIRSTFIT();
 
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 		return alloc_block_FF(size);
@@ -64,10 +64,9 @@ void* malloc(uint32 size) {
 			}
 
 		}
-
 		sys_allocate_user_mem(start_add, size);
 	}
-	return NULL;*/
+	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
 }
