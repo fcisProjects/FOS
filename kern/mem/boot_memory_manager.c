@@ -81,11 +81,9 @@ void initialize_kernel_VM()
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
-
 	ptr_page_directory = boot_allocate_space(PAGE_SIZE, PAGE_SIZE);
 	/*2023: this line is moved to the boot_allocate_space()*/ //memset(ptr_page_directory, 0, PAGE_SIZE);
 	phys_page_directory = STATIC_KERNEL_PHYSICAL_ADDRESS(ptr_page_directory);
-
 	//////////////////////////////////////////////////////////////////////
 	// Map the kernel stack for ALL CPU schedulers with VA range :
 	//  [KERNEL_STACK_TOP - (CPUIdx+1) * KERNEL_STACK_SIZE, KERNEL_STACK_TOP - (CPUIdx * KERNEL_STACK_SIZE)),

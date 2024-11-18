@@ -465,7 +465,7 @@ static void sys_exit_env()
 int sys_create_env(char* programName, unsigned int page_WS_size,unsigned int LRU_second_list_size, unsigned int percent_WS_pages_to_remove)
 {
 	//cprintf("\nAttempt to create a new env\n");
-
+	cprintf("\n in createeeeee\n");
 	struct Env* env =  env_create(programName, page_WS_size, LRU_second_list_size, percent_WS_pages_to_remove);
 	if(env == NULL)
 	{

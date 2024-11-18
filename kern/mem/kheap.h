@@ -6,6 +6,7 @@
 #endif
 
 #include <inc/types.h>
+#include <inc/queue.h>
 
 
 /*2017*/
@@ -16,6 +17,8 @@ uint32 _KHeapPlacementStrategy;
 #define KHP_PLACE_BESTFIT 	0x2
 #define KHP_PLACE_NEXTFIT 	0x3
 #define KHP_PLACE_WORSTFIT 	0x4
+
+
 
 static inline void setKHeapPlacementStrategyCONTALLOC(){_KHeapPlacementStrategy = KHP_PLACE_CONTALLOC;}
 static inline void setKHeapPlacementStrategyFIRSTFIT(){_KHeapPlacementStrategy = KHP_PLACE_FIRSTFIT;}
@@ -42,6 +45,10 @@ int numOfKheapVACalls ;
 
 
 //TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - add suitable code here
+uint32 start,brk,end;
+
+
+
 
 
 #endif // FOS_KERN_KHEAP_H_

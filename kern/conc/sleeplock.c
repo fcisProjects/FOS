@@ -60,6 +60,10 @@ void release_sleeplock(struct sleeplock* lk)
     //panic("release_sleeplock is not implemented yet");
     //Your Code is Here...
 
+	if (!holding_sleeplock(lk))
+		        panic("acquire_sleeplock: lock %c is already held by the same CPU.", lk->name);
+
+
     acquire_spinlock(&lk->lk);
 
     if (lk->chan.queue.size != 0) {
