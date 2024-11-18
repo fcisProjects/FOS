@@ -16,19 +16,60 @@ void* sbrk(int increment)
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
-void* malloc(uint32 size)
-{
+void* malloc(uint32 size) {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
-	if (size == 0) return NULL ;
+	if (size == 0)
+		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
 	panic("malloc() is not implemented yet...!!");
-	return NULL;
+	/*sys_isUHeapPlacementStrategyFIRSTFIT();
+
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+		return alloc_block_FF(size);
+	} else if (size > DYN_ALLOC_MAX_SIZE) {
+		return NULL;
+	} else {
+		uint32 numOfPages = ROUNDUP(size,PAGE_SIZE) / PAGE_SIZE;
+		uint32 baseVA = myEnv->end + PAGE_SIZE;
+		uint32 allocatedVA = 0;
+		uint32 bool = 0;
+		int counter = 0;
+		uint32 start_add;
+		uint32 iterator;
+		for (uint32 va = baseVA; va < KERNEL_HEAP_MAX; va += PAGE_SIZE) {
+
+			iterator = va;
+			for (int i = 0; i < numOfPages; ++i) {
+				uint32* ptr_table = NULL;
+
+				uint32 frame = sys_is_frame_free(va);
+
+				if (frame == 1) {	// free frame
+					counter++;
+				} else {
+					va = iterator;
+					counter = 0;
+					break;
+				}
+				iterator = iterator + PAGE_SIZE;
+			}
+
+			if (counter == numOfPages) {
+				start_add = va;
+				allocatedVA = va;
+				break;
+			}
+
+		}
+
+		sys_allocate_user_mem(start_add, size);
+	}
+	return NULL;*/
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
-
 }
 
 //=================================

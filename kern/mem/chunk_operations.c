@@ -139,10 +139,47 @@ void* sys_sbrk(int numOfPages)
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
 	/*====================================*/
 	/*Remove this line before start coding*/
-	return (void*)-1 ;
+	//return (void*)-1 ;
 	/*====================================*/
+
+	//lazy allocation: use bit no. 9 as used bit
+
 	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
 
+	if (numOfPages == 0) {
+		return (void*) brk;
+	}
+
+	uint32 sizeToAllocate = numOfPages * PAGE_SIZE;
+
+	if (brk + sizeToAllocate > end) {
+		return (void*) -1;
+	}
+
+	uint32 oldBrk = brk;
+	brk += sizeToAllocate;
+
+	for (int i = 0; i < numOfPages; i++) {
+
+		uint32 currAddress = oldBrk + i * PAGE_SIZE;
+
+		struct FrameInfo *frameInfo;
+
+		uint32* page_table;
+		if (get_page_table(ptr_page_directory, currAddress, &page_table) == TABLE_NOT_EXIST) {
+			create_page_table(ptr_page_directory, currAddress);
+		}
+
+		uint32 entery = page_table[PTX(currAddress)];
+		entery |= (1 << 9);
+		page_table[PTX(currAddress)] = entery;
+	}
+
+	uint32*endblock_ptr = (void*) brk - sizeof(int);
+	*endblock_ptr = 1;
+	uint32*oldendblock_ptr = (void*) oldBrk - sizeof(int);
+	*oldendblock_ptr = 0;
+	return (void*) oldBrk;
 
 }
 
@@ -159,7 +196,13 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+	//panic("allocate_user_mem() is not implemented yet...!!");
+	uint32 numOfPages = ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE;
+	uint32 currentFrameVA = virtual_address;
+	for(uint32 i=0;i<numOfPages;i++){
+		currentFrameVA |= 0x00000400;
+		currentFrameVA += PAGE_SIZE;
+	}
 }
 
 //=====================================

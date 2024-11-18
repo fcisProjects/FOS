@@ -317,3 +317,8 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	syscall(SYS_allocate_user_mem,virtual_address,size,0,0,0);
 }
 
+uint32 sys_is_frame_free(uint32 virtual_address)
+{
+	return syscall(SYS_is_frame_free,virtual_address,0,0,0,0);
+
+}
