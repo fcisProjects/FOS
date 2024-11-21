@@ -197,10 +197,16 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
 	//panic("allocate_user_mem() is not implemented yet...!!");
+	uint32 *page_table = NULL;
+	int x = get_page_table(e->env_page_directory, virtual_address, &page_table);
+	if (page_table == NULL) {
+		create_page_table(e->env_page_directory, virtual_address);
+	}
 	uint32 numOfPages = ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE;
 	uint32 currentFrameVA = virtual_address;
 	for(uint32 i=0;i<numOfPages;i++){
 		currentFrameVA |= 0x00000400;
+		currentFrameVA |= PERM_USER;
 		currentFrameVA += PAGE_SIZE;
 	}
 }

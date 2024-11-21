@@ -340,8 +340,10 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 
 uint32 sys_is_frame_free(uint32 virtual_address){
 	uint32* page_table = NULL;
-	    struct FrameInfo* frame = get_frame_info(ptr_page_directory, virtual_address, &page_table);
-	    if (frame == NULL)
+	 struct FrameInfo* frame = get_frame_info(cur_env->env_page_directory, virtual_address, &page_table);
+	//uint32 frame =virtual_address & PERM_USER;
+
+	    if (frame == 0)
 	        return 1;
 	    return 0;
 }
@@ -545,7 +547,9 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 			sys_allocate_user_mem(a1,a2);
 			return 0;
 			break;
-
+	case SYS_is_frame_free:
+		return sys_is_frame_free(a1);
+		break;
 	//======================================================================
 	case SYS_cputs:
 		sys_cputs((const char*)a1,a2,(uint8)a3);

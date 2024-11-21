@@ -28,8 +28,10 @@ void* malloc(uint32 size) {
 	sys_isUHeapPlacementStrategyFIRSTFIT();
 
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+		cprintf("block alloc\n");
 		return alloc_block_FF(size);
 	} else if (size > DYN_ALLOC_MAX_SIZE) {
+		cprintf("greater than max size\n");
 		return NULL;
 	} else {
 		uint32 numOfPages = ROUNDUP(size,PAGE_SIZE) / PAGE_SIZE;
@@ -39,17 +41,25 @@ void* malloc(uint32 size) {
 		int counter = 0;
 		uint32 start_add;
 		uint32 iterator;
-		for (uint32 va = baseVA; va < KERNEL_HEAP_MAX; va += PAGE_SIZE) {
-
+		cprintf("initialzations\n");
+		for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
+			cprintf("outerloop\n");
 			iterator = va;
 			for (int i = 0; i < numOfPages; ++i) {
+				cprintf("inner loop start\n");
 				uint32* ptr_table = NULL;
+				cprintf("before sys_is_frame_free\n");
+				uint32 framee = sys_is_frame_free(iterator);
+				cprintf("after sys_is_frame_free\n");
+				//get_page_table(myEnv->env_page_directory, va, &ptr_table);
+				cprintf("frame: %d\n",framee);
 
-				uint32 frame = sys_is_frame_free(va);
-
-				if (frame == 1) {	// free frame
+				if (framee == 1) {
+					// free frame
+					cprintf("added to free frame counter\n");
 					counter++;
 				} else {
+					cprintf("not enough space break\n");
 					va = iterator;
 					counter = 0;
 					break;
@@ -58,13 +68,18 @@ void* malloc(uint32 size) {
 			}
 
 			if (counter == numOfPages) {
+				cprintf("enough frame exist at start va: %x\n", va);
 				start_add = va;
 				allocatedVA = va;
 				break;
 			}
 
 		}
+		cprintf("call sys allocate user mem\n");
 		sys_allocate_user_mem(start_add, size);
+		cprintf("after call sys allocate user mem\n");
+		return (void*)start_add;
+
 	}
 	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()

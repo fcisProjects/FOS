@@ -61,38 +61,74 @@ void _main(void)
 	cprintf("\n%~[1] Allocate spaces of different sizes in PAGE ALLOCATOR and write some data to them [70%]\n");
 	void* ptr_allocations[20] = {0};
 	{
-		//cprintf("3\n");
+		cprintf("3\n");
 		//2 MB
 		{
 			freeFrames = sys_calculate_free_frames() ;
+			cprintf("4\n");
 			usedDiskPages = sys_pf_calculate_allocated_pages() ;
+			cprintf("5\n");
+
 			ptr_allocations[0] = malloc(2*Mega-kilo);
-			if ((uint32) ptr_allocations[0] != (pagealloc_start)) {is_correct = 0; cprintf("1 Wrong start address for the allocated space... \n");}
+			cprintf("6\n");
+
+			if ((uint32) ptr_allocations[0] != (pagealloc_start)) {is_correct = 0; cprintf("1 Wrong start address for the allocated space... Expected: %x Found: %x\n",pagealloc_start,ptr_allocations[0]);}
+			cprintf("7\n");
+
 			expectedNumOfFrames = 1 /*table*/ ;
+			cprintf("8\n");
+
 			actualNumOfFrames = freeFrames - sys_calculate_free_frames();
+			cprintf("9\n");
+
 			if (!inRange(actualNumOfFrames, expectedNumOfFrames, expectedNumOfFrames + 2 /*Block Alloc: max of 1 page & 1 table*/))
 			{is_correct = 0; cprintf("1 Wrong allocation: unexpected number of pages that are allocated in memory! Expected = [%d, %d], Actual = %d\n", expectedNumOfFrames, expectedNumOfFrames+2, actualNumOfFrames);}
+			cprintf("10\n");
+
 			if ((sys_pf_calculate_allocated_pages() - usedDiskPages) != 0) { is_correct = 0; cprintf("1 Extra or less pages are allocated in PageFile\n");}
+			cprintf("11\n");
 
 			freeFrames = sys_calculate_free_frames() ;
+			cprintf("12\n");
+
 			lastIndexOfByte = (2*Mega-kilo)/sizeof(char) - 1;
+			cprintf("13\n");
+
 			byteArr = (char *) ptr_allocations[0];
-			byteArr[0] = minByte ;
+			cprintf("14\n");
+
+			byteArr[0] = minByte;
+			cprintf("15\n");
+
 			byteArr[lastIndexOfByte] = maxByte ;
+			cprintf("16\n");
+
 			expectedNumOfFrames = 2 /*+1 table already created in malloc due to marking the allocated pages*/ ;
+			cprintf("17\n");
+
 			actualNumOfFrames = (freeFrames - sys_calculate_free_frames()) ;
+			cprintf("18\n");
+
 			if (!inRange(actualNumOfFrames, expectedNumOfFrames, expectedNumOfFrames + 2 /*Block Alloc: max of 1 page & 1 table*/))
 			{ is_correct = 0; cprintf("1 Wrong fault handler: pages are not loaded successfully into memory/WS. Expected diff in frames at least = %d, actual = %d\n", expectedNumOfFrames, actualNumOfFrames);}
+			cprintf("19\n");
 
 			uint32 expectedVAs[2] = { ROUNDDOWN((uint32)(&(byteArr[0])), PAGE_SIZE), ROUNDDOWN((uint32)(&(byteArr[lastIndexOfByte])), PAGE_SIZE)} ;
+			cprintf("20\n");
+
 			found = sys_check_WS_list(expectedVAs, 2, 0, 2);
+			cprintf("21\n");
+
 			if (found != 1) { is_correct = 0; cprintf("1 malloc: page is not added to WS\n");}
+			cprintf("22\n");
+
 		}
 		//cprintf("4\n");
 		if (is_correct)
 		{
 			eval += 10;
 		}
+		cprintf("test 1 done\n");
 
 		is_correct = 1;
 		//2 MB

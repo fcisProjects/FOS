@@ -30,12 +30,13 @@ int holding_sleeplock(struct sleeplock *lk)
 }
 //==========================================================================
 
+
 void acquire_sleeplock(struct sleeplock *lk) {
     //TODO: [PROJECT'24.MS1 - #13] [4] LOCKS - acquire_sleeplock
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("acquire_sleeplock is not implemented yet");
     //Your Code is Here...
-
+//	cprintf("acquire_sleeplock=========================WS Size ========================= %d\n", 0 );
 	if (holding_sleeplock(lk))
 	        panic("acquire_sleeplock: lock %c is already held by the same CPU.", lk->name);
 
@@ -46,6 +47,7 @@ void acquire_sleeplock(struct sleeplock *lk) {
 	    }
 
 	    lk->locked = 1;
+	    lk->pid=get_cpu_proc()->env_id;
 
 	    release_spinlock(&lk->lk);
 
@@ -59,9 +61,16 @@ void release_sleeplock(struct sleeplock* lk)
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("release_sleeplock is not implemented yet");
     //Your Code is Here...
+//	cprintf("release_sleeplock=========================WS Size ================================= %d\n", 0 );
 
-	if (!holding_sleeplock(lk))
-		        panic("acquire_sleeplock: lock %c is already held by the same CPU.", lk->name);
+
+
+
+if (!holding_sleeplock(lk))
+		    panic("release_sleeplock: lock %c is .", lk->name);
+
+
+
 
 
     acquire_spinlock(&lk->lk);

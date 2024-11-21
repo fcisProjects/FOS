@@ -191,9 +191,7 @@ void fault_handler(struct Trapframe *tf) {
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
-			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
-			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
-			//your code is here
+
 			uint32 PERM_MARK = 0x400;
 			cprintf(
 					"in the validate pointer-------------------------------------------->  \n");
@@ -209,7 +207,7 @@ void fault_handler(struct Trapframe *tf) {
 				cprintf("if bit is not marked in heap \n");
 				env_exit();
 			} else if (fault_va >= KERNEL_BASE && fault_va < KERNEL_HEAP_MAX) {
-				cprintf("kearnal heap \n");
+				cprintf("kernel heap \n");
 				env_exit();
 			} else if (fault_va & PERM_WRITEABLE) {
 				env_exit();
