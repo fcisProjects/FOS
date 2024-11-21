@@ -188,28 +188,43 @@ void* sys_sbrk(int numOfPages)
 //=====================================
 void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 {
-	/*====================================*/
-	/*Remove this line before start coding*/
-//	inctst();
-//	return;
-	/*====================================*/
+    // Locate or create the page table
+    uint32 *page_table = NULL;
+    int x = get_page_table(e->env_page_directory, virtual_address, &page_table);
 
-	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
-	// Write your code here, remove the panic and write your code
-	//panic("allocate_user_mem() is not implemented yet...!!");
-	uint32 *page_table = NULL;
-	int x = get_page_table(e->env_page_directory, virtual_address, &page_table);
-	if (page_table == NULL) {
-		create_page_table(e->env_page_directory, virtual_address);
-	}
-	uint32 numOfPages = ROUNDUP(size,PAGE_SIZE)/PAGE_SIZE;
-	uint32 currentFrameVA = virtual_address;
-	for(uint32 i=0;i<numOfPages;i++){
-		currentFrameVA |= 0x00000400;
-		currentFrameVA |= PERM_USER;
-		currentFrameVA += PAGE_SIZE;
-	}
+    if (page_table == NULL) {
+        create_page_table(e->env_page_directory, virtual_address);
+        get_page_table(e->env_page_directory, virtual_address, &page_table);
+    }
+
+    uint32 numOfPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+    uint32 currentFrameVA = virtual_address;
+
+    for (uint32 i = 0; i < numOfPages; i++) {
+        // Calculate the index in the page table
+        uint32 pt_index = PTX(currentFrameVA);
+        unsigned int p = kheap_physical_address(currentFrameVA);
+
+        // Update the page table entry
+        cprintf("Before: pt[%d] = %08x\n", pt_index, page_table[pt_index]);
+        tlb_invalidate (e->env_page_directory, (void*)currentFrameVA);
+        tlb_invalidate (e->env_page_directory, (void*)p);
+
+        page_table[pt_index] = 0 | 0x400 | PERM_WRITEABLE | PERM_PRESENT | PERM_USER;
+
+
+        tlb_invalidate(e->env_page_directory, (void*) currentFrameVA);
+		tlb_invalidate(e->env_page_directory, (void*) p);
+
+        cprintf("After: pt[%d] = %08x\n", pt_index, page_table[pt_index]);
+
+
+        // Move to the next page
+        currentFrameVA += PAGE_SIZE;
+    }
 }
+
+
 
 //=====================================
 // 2) FREE USER MEMORY:

@@ -43,23 +43,23 @@ void* malloc(uint32 size) {
 		uint32 iterator;
 		cprintf("initialzations\n");
 		for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
-			cprintf("outerloop\n");
+			//cprintf("outerloop\n");
 			iterator = va;
 			for (int i = 0; i < numOfPages; ++i) {
-				cprintf("inner loop start\n");
+				//cprintf("inner loop start\n");
 				uint32* ptr_table = NULL;
-				cprintf("before sys_is_frame_free\n");
+				//cprintf("before sys_is_frame_free\n");
 				uint32 framee = sys_is_frame_free(iterator);
-				cprintf("after sys_is_frame_free\n");
+				//cprintf("after sys_is_frame_free\n");
 				//get_page_table(myEnv->env_page_directory, va, &ptr_table);
-				cprintf("frame: %d\n",framee);
+				//cprintf("frame: %d\n",framee);
 
 				if (framee == 1) {
 					// free frame
-					cprintf("added to free frame counter\n");
+					//cprintf("added to free frame counter\n");
 					counter++;
 				} else {
-					cprintf("not enough space break\n");
+					//cprintf("not enough space break\n");
 					va = iterator;
 					counter = 0;
 					break;
@@ -68,16 +68,17 @@ void* malloc(uint32 size) {
 			}
 
 			if (counter == numOfPages) {
-				cprintf("enough frame exist at start va: %x\n", va);
+				//cprintf("enough frame exist at start va: %x\n", va);
 				start_add = va;
 				allocatedVA = va;
 				break;
 			}
 
 		}
-		cprintf("call sys allocate user mem\n");
+		//cprintf("call sys allocate user mem\n");
+		//cprintf("enough frame exist at start va: %x\n", start_add);
 		sys_allocate_user_mem(start_add, size);
-		cprintf("after call sys allocate user mem\n");
+		//cprintf("after call sys allocate user mem\n");
 		return (void*)start_add;
 
 	}

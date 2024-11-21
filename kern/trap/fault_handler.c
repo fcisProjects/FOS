@@ -193,11 +193,10 @@ void fault_handler(struct Trapframe *tf) {
 			//your code is here
 
 			uint32 PERM_MARK = 0x400;
-			cprintf(
-					"in the validate pointer-------------------------------------------->  \n");
+			cprintf("in the validate pointer-------------------------------------------->  \n");
 			cprintf("fault add is %p \n", fault_va);
 			cprintf("perm mark is %p \n", PERM_MARK);
-			cprintf("the anding is %d \n", fault_va & PERM_MARK);
+			cprintf("the anding is %p\n", fault_va & PERM_MARK);
 
 			//			if(fault_va&PERM_PRESENT){
 			//				fault_va=fault_va |(PERM_WRITEABLE);
