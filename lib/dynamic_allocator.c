@@ -260,7 +260,7 @@ void *alloc_block_FF(uint32 size) {
 		}
 
 
-		if (prev_alloc) {
+		if (prev_alloc && ((char*)last_elem + prev_size == (char*)oldbrk)) {
 
 //			cprintf("case B (merge)\n");
 			LIST_REMOVE(&freeBlocksList, last_elem);
