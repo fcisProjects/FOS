@@ -365,10 +365,25 @@ void free_block(void* va) {
 	bool prev_alloc = is_free_block(prev);
 
 	uint32 cur_size = get_block_size(va);
+	//extraaaa
+	uint32*oldbrk = sbrk(0);
+	//cprintf("leh next or not %p,   %p", va + cur_size, oldbrk);
 
-	void* next = (char*) va + cur_size;
-	uint32 next_size = get_block_size(next);
-	bool next_alloc = is_free_block(next);
+	void* next;
+	uint32 next_size;
+	bool next_alloc;
+	if ((uint32) oldbrk == (uint32) va + cur_size) // no next
+	{
+		next_alloc=0;
+	}
+	else
+	{
+
+		next = (char*) va + cur_size;
+		next_size = get_block_size(next);
+		next_alloc = is_free_block(next);
+	}
+
 
 	if (prev_alloc && next_alloc) {
 		struct BlockElement *prevelement = (struct BlockElement*) ((char*) va
