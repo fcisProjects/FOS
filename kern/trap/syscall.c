@@ -338,14 +338,19 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	return;
 }
 
-uint32 sys_is_frame_free(uint32 virtual_address){
-	uint32* page_table = NULL;
-	 struct FrameInfo* frame = get_frame_info(cur_env->env_page_directory, virtual_address, &page_table);
-	//uint32 frame =virtual_address & PERM_USER;
+uint32 sys_is_frame_free(uint32 virtual_address) {
 
-	    if (frame == 0)
-	        return 1;
-	    return 0;
+	uint32 *pageTable;
+	int y = get_page_table(cur_env->env_page_directory, virtual_address,
+			&pageTable);
+
+	if (pageTable != NULL) {
+		uint32 entry = pageTable[PTX(virtual_address)];
+		if ((entry & 0x400) || (entry & PERM_USER))
+			return 0;
+	}
+
+	return 1;
 }
 
 

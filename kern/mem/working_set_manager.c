@@ -145,10 +145,10 @@ void env_page_ws_print(struct Env *e)
 			cprintf("\n");
 			i++;
 		}
-		for (; i < e->page_WS_max_size; ++i)
+		/*for (; i < e->page_WS_max_size; ++i)
 		{
 			cprintf("EMPTY LOCATION\n");
-		}
+		}*/
 	}
 }
 #else

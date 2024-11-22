@@ -120,8 +120,7 @@ uint32 calculate_required_frames(uint32* page_directory, uint32 sva, uint32 size
 //=====================================
 /* DYNAMIC ALLOCATOR SYSTEM CALLS */
 //=====================================
-void* sys_sbrk(int numOfPages)
-{
+void* sys_sbrk(int numOfPages) {
 	/* numOfPages > 0: move the segment break of the current user program to increase the size of its heap
 	 * 				by the given number of pages. You should allocate NOTHING,
 	 * 				and returns the address of the previous break (i.e. the beginning of newly mapped memory).
@@ -137,50 +136,32 @@ void* sys_sbrk(int numOfPages)
 	 */
 
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
-	/*====================================*/
-	/*Remove this line before start coding*/
+	//====================================/
+	//Remove this line before start coding/
 	//return (void*)-1 ;
-	/*====================================*/
-
+	//====================================/
 	//lazy allocation: use bit no. 9 as used bit
-
 	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
 
 	if (numOfPages == 0) {
-		return (void*) brk;
+		return (void*) env->brk;
 	}
 
-	uint32 sizeToAllocate = numOfPages * PAGE_SIZE;
+	uint32 sizeToAllocate = (numOfPages * PAGE_SIZE);
 
-	if (brk + sizeToAllocate > end) {
+	if (env->brk + sizeToAllocate > end) {
 		return (void*) -1;
 	}
 
-	uint32 oldBrk = brk;
-	brk += sizeToAllocate;
+	uint32 oldBrk = env->brk;
+	env->brk += sizeToAllocate;
 
-	for (int i = 0; i < numOfPages; i++) {
+	cprintf("new brk %p\n", env->brk);
+	allocate_user_mem(env, oldBrk, sizeToAllocate+PAGE_SIZE);
 
-		uint32 currAddress = oldBrk + i * PAGE_SIZE;
 
-		struct FrameInfo *frameInfo;
 
-		uint32* page_table;
-		if (get_page_table(ptr_page_directory, currAddress, &page_table) == TABLE_NOT_EXIST) {
-			create_page_table(ptr_page_directory, currAddress);
-		}
-
-		uint32 entery = page_table[PTX(currAddress)];
-		entery |= (1 << 9);
-		page_table[PTX(currAddress)] = entery;
-	}
-
-	uint32*endblock_ptr = (void*) brk - sizeof(int);
-	*endblock_ptr = 1;
-	uint32*oldendblock_ptr = (void*) oldBrk - sizeof(int);
-	*oldendblock_ptr = 0;
 	return (void*) oldBrk;
-
 }
 
 //=====================================
@@ -201,25 +182,19 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
     uint32 currentFrameVA = virtual_address;
 
     for (uint32 i = 0; i < numOfPages; i++) {
-        // Calculate the index in the page table
         uint32 pt_index = PTX(currentFrameVA);
-        unsigned int p = kheap_physical_address(currentFrameVA);
 
-        // Update the page table entry
         cprintf("Before: pt[%d] = %08x\n", pt_index, page_table[pt_index]);
         tlb_invalidate (e->env_page_directory, (void*)currentFrameVA);
-        tlb_invalidate (e->env_page_directory, (void*)p);
 
-        page_table[pt_index] = 0 | 0x400 | PERM_WRITEABLE | PERM_PRESENT | PERM_USER;
+        page_table[pt_index] = 0 | 0x400 | PERM_USER;
 
 
         tlb_invalidate(e->env_page_directory, (void*) currentFrameVA);
-		tlb_invalidate(e->env_page_directory, (void*) p);
 
         cprintf("After: pt[%d] = %08x\n", pt_index, page_table[pt_index]);
 
 
-        // Move to the next page
         currentFrameVA += PAGE_SIZE;
     }
 }

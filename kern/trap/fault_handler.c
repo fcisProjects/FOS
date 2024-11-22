@@ -191,25 +191,29 @@ void fault_handler(struct Trapframe *tf) {
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
-
 			uint32 PERM_MARK = 0x400;
-			cprintf("in the validate pointer-------------------------------------------->  \n");
+			cprintf(
+					"in the validate pointer-------------------------------------------->  \n");
 			cprintf("fault add is %p \n", fault_va);
 			cprintf("perm mark is %p \n", PERM_MARK);
-			cprintf("the anding is %p\n", fault_va & PERM_MARK);
-
-			//			if(fault_va&PERM_PRESENT){
-			//				fault_va=fault_va |(PERM_WRITEABLE);
-			//			}
-			if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
-					&& (!(fault_va & PERM_MARK))) {			//point to user heap
-				cprintf("if bit is not marked in heap \n");
-				env_exit();
-			} else if (fault_va >= KERNEL_BASE && fault_va < KERNEL_HEAP_MAX) {
-				cprintf("kernel heap \n");
-				env_exit();
-			} else if (fault_va & PERM_WRITEABLE) {
-				env_exit();
+			cprintf("the anding is %d \n", fault_va & PERM_MARK);
+			uint32 *page;
+			int y = get_page_table(faulted_env->env_page_directory, fault_va,
+					&page);
+			if (page != NULL) {
+				uint32 entry = page[PTX(fault_va)];
+				if ((fault_va >= USER_HEAP_START && fault_va <= USER_HEAP_MAX)
+						&& (!(entry & PERM_MARK))) {		//point to user heap
+					cprintf("if bit is not marked in heap \n");
+					env_exit();
+				} else if ((entry & PERM_PRESENT) && (!(entry & PERM_USER))) {
+					cprintf("kearnal heap \n");
+					env_exit();
+				} else if ((entry & PERM_PRESENT)
+						&& (!(entry & PERM_WRITEABLE))) {
+					cprintf("read only  \n");
+					env_exit();
+				}
 			}
 
 			/*============================================================================================*/
@@ -306,7 +310,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 			if (!((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
 					|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP))) {
 				cprintf(" not also stack or heap   \n");
-				unmap_frame(faulted_env->env_page_directory, fault_va);
+				//unmap_frame(faulted_env->env_page_directory, fault_va);
 				env_exit();
 			}
 
@@ -353,6 +357,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 		//panic("page_fault_handler() Replacement is not implemented yet...!!");
 	}
 }
+
 
 void __page_fault_handler_with_buffering(struct Env * curenv, uint32 fault_va) {
 	//[PROJECT] PAGE FAULT HANDLER WITH BUFFERING
