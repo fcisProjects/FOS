@@ -470,6 +470,7 @@ void unmap_frame(uint32 *ptr_page_directory, uint32 virtual_address)
 
 		tlb_invalidate(ptr_page_directory, (void *)virtual_address);
 	}
+
 }
 
 

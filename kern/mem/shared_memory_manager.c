@@ -22,10 +22,10 @@ struct Share* get_share(int32 ownerID, char* name);
 // [1] INITIALIZE SHARES:
 //===========================
 //Initialize the list and the corresponding lock
-void sharing_init()
-{
+void sharing_init() {
 #if USE_KHEAP
-	LIST_INIT(&AllShares.shares_list) ;
+	LIST_INIT(&AllShares.shares_list)
+	;
 	init_spinlock(&AllShares.shareslock, "shares lock");
 #else
 	panic("not handled when KERN HEAP is disabled");
@@ -35,8 +35,7 @@ void sharing_init()
 //==============================
 // [2] Get Size of Share Object:
 //==============================
-int getSizeOfSharedObject(int32 ownerID, char* shareName)
-{
+int getSizeOfSharedObject(int32 ownerID, char* shareName) {
 	//[PROJECT'24.MS2] DONE
 	// This function should return the size of the given shared object
 	// RETURN:
@@ -54,7 +53,6 @@ int getSizeOfSharedObject(int32 ownerID, char* shareName)
 
 //===========================================================
 
-
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -62,8 +60,7 @@ int getSizeOfSharedObject(int32 ownerID, char* shareName)
 // [1] Create frames_storage:
 //===========================
 // Create the frames_storage and initialize it by 0
-inline struct FrameInfo** create_frames_storage(int numOfFrames)
-{
+inline struct FrameInfo** create_frames_storage(int numOfFrames) {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_frames_storage()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("create_frames_storage is not implemented yet");
@@ -77,13 +74,28 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames)
 //Allocates a new shared object and initialize its member
 //It dynamically creates the "framesStorage"
 //Return: allocatedObject (pointer to struct Share) passed by reference
-struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 isWritable)
-{
+struct Share* create_share(int32 ownerID, char* shareName, uint32 size,
+		uint8 isWritable) {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("create_share is not implemented yet");
 	//Your Code is Here...
+/*	struct Share* shared = NULL;
 
+	void* va = kmalloc(size);
+
+	shared->ID = va & 0x7FFFFFFF;
+	shared->references = 1;
+
+	shared->isWritable = isWritable;
+	shared->name = shareName;
+	shared->size = size;
+	shared->ownerID = ownerID;
+
+	int frames = ROUNDUP (size, PAGE_SIZE) / PAGE_SIZE;
+	shared->framesStorage = create_frames_storage(frames);
+
+	return shared;*/
 }
 
 //=============================
@@ -93,13 +105,19 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 //Return:
 //	a) if found: ptr to Share object
 //	b) else: NULL
-struct Share* get_share(int32 ownerID, char* name)
-{
+struct Share* get_share(int32 ownerID, char* name) {
 	//TODO: [PROJECT'24.MS2 - #17] [4] SHARED MEMORY - get_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("get_share is not implemented yet");
+	//panic("get_share is not implemented yet");
 	//Your Code is Here...
-
+	struct Share *shared;
+	LIST_FOREACH(shared,&AllShares.shares_list)
+	{
+		if (ownerID == shared->ownerID && strcmp(name, shared->name) == 0) {
+			return shared;
+		}
+	}
+	return NULL;
 }
 
 //=========================
@@ -134,8 +152,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 			return E_NO_SHARE;
 		}
 
-		uint32 currAddress = (uint32)((uint8*)virtual_address + i * PAGE_SIZE);
-
+		uint32 currAddress = (uint32) ((uint8*) virtual_address + i * PAGE_SIZE);
 
 		int ret = map_frame(ptr_page_directory, frameInfo, currAddress,
 		PERM_WRITEABLE | isWritable);
@@ -152,18 +169,54 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 	return newShare->ID;
 }
 
-
 //======================
 // [5] Get Share Object:
 //======================
-int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
-{
+int getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #21] [4] SHARED MEMORY [KERNEL SIDE] - getSharedObject()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("getSharedObject is not implemented yet");
+	//panic("getSharedObject is not implemented yet");
 	//Your Code is Here...
 
 	struct Env* myenv = get_cpu_proc(); //The calling environment
+	acquire_spinlock(&AllShares.shareslock);
+	struct Share *it = NULL, *s = NULL;
+	LIST_FOREACH(it,&AllShares.shares_list)
+	{
+		if ((shareName == it->name) && (ownerID == it->ownerID)) {
+			s = it;
+			break;
+		}
+	}
+	if (s == NULL)
+		return E_SHARED_MEM_NOT_EXISTS;
+	int numOfFrams = ROUNDUP(s->size,PAGE_SIZE) / PAGE_SIZE;
+	for (int i = 0; i < numOfFrams; i++) {
+		//struct FrameInfo** framesStorage;
+		struct FrameInfo *f = s->framesStorage[i];
+		if (s->isWritable == 1) {
+			int ret = map_frame(myenv->env_page_directory, f,
+					(uint32) virtual_address + i * PAGE_SIZE,
+					PERM_WRITEABLE | PERM_USER);
+			if (ret != 0) {
+				return 0;
+			}
+
+		} else {
+			int ret = map_frame(myenv->env_page_directory, f,
+					(uint32) virtual_address + i * PAGE_SIZE, PERM_USER);
+			if (ret != 0) {
+				return 0;
+			}
+		}
+	}
+
+	s->references++;
+
+	release_spinlock(&AllShares.shareslock);
+
+	return s->ID;
+
 }
 
 //==================================================================================//
@@ -175,8 +228,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 //==========================
 //delete the given shared object from the "shares_list"
 //it should free its framesStorage and the share object itself
-void free_share(struct Share* ptrShare)
-{
+void free_share(struct Share* ptrShare) {
 	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - free_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("free_share is not implemented yet");
@@ -186,8 +238,7 @@ void free_share(struct Share* ptrShare)
 //========================
 // [B2] Free Share Object:
 //========================
-int freeSharedObject(int32 sharedObjectID, void *startVA)
-{
+int freeSharedObject(int32 sharedObjectID, void *startVA) {
 	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("freeSharedObject is not implemented yet");

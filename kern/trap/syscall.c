@@ -324,6 +324,7 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
+	cprintf("in sys_allocate_user_mem \n");
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
 	if (virtual_address == (uint32) NULL || virtual_address == 0) {
 		env_exit();
@@ -333,7 +334,7 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	} else if (size + virtual_address > USER_HEAP_MAX) {
 		env_exit();
 	}
-
+	cprintf("will call allocate_user_mem \n");
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }
@@ -465,7 +466,7 @@ static void sys_exit_env()
 int sys_create_env(char* programName, unsigned int page_WS_size,unsigned int LRU_second_list_size, unsigned int percent_WS_pages_to_remove)
 {
 	//cprintf("\nAttempt to create a new env\n");
-
+	cprintf("\n in createeeeee\n");
 	struct Env* env =  env_create(programName, page_WS_size, LRU_second_list_size, percent_WS_pages_to_remove);
 	if(env == NULL)
 	{
@@ -515,6 +516,7 @@ void sys_bypassPageFault(uint8 instrLength)
 // Dispatches to the correct kernel function, passing the arguments.
 uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uint32 a5)
 {
+
 	cur_env = get_cpu_proc();
 	assert(cur_env != NULL);
 

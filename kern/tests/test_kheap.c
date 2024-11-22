@@ -1614,6 +1614,7 @@ int test_kheap_phys_addr()
 					//cprintf("\nVA = %x, table entry = %x, khep_pa = %x\n",va + j*PAGE_SIZE, (ptr_table[j] & 0xFFFFF000) , allPAs[i]);
 					if (correct)
 					{ correct = 0; cprintf("5.2 Wrong kheap_physical_address\n"); }
+				//	break;
 				}
 				va += PAGE_SIZE;
 			}

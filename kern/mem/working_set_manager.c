@@ -19,7 +19,17 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	//TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - Create a new WS element
 	//If failed to create a new one, kernel should panic()!
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("env_page_ws_list_create_element is not implemented yet");
+	//panic("env_page_ws_list_create_element is not implemented yet");
+	//if(virtual_address>KERNEL_HEAP_START&& virtual_address<KERNEL_HEAP_MAX){ // suppose to be hardlimit + page size
+	struct WorkingSetElement *created_element=kmalloc(sizeof(struct WorkingSetElement));
+
+	created_element->virtual_address=virtual_address;
+  //  cprintf(" in create element \n");
+	return created_element;
+
+//	else{
+//		panic("invalid address ");
+//	}
 	//Your Code is Here...
 
 }
