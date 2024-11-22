@@ -105,14 +105,51 @@ struct Share* get_share(int32 ownerID, char* name)
 //=========================
 // [4] Create Share Object:
 //=========================
-int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
-{
+int createSharedObject(int32 ownerID, char* shareName, uint32 size,
+		uint8 isWritable, void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #19] [4] SHARED MEMORY [KERNEL SIDE] - createSharedObject()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("createSharedObject is not implemented yet");
+	//panic("createSharedObject is not implemented yet");
 	//Your Code is Here...
 
 	struct Env* myenv = get_cpu_proc(); //The calling environment
+	struct Share* existingShare = get_share(ownerID, shareName);
+	if (existingShare != NULL) {
+		return E_SHARED_MEM_EXISTS;
+	}
+
+	struct Share* newShare = create_share(ownerID, shareName, size, isWritable);
+	if (newShare == NULL) {
+		return E_NO_SHARE;
+	}
+
+	uint32 numOfFrames = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+
+	for (uint32 i = 0; i < numOfFrames; i++) {
+
+		struct FrameInfo *frameInfo = NULL;
+		int res = allocate_frame(&frameInfo);
+		if (res == E_NO_MEM) {
+			kfree(newShare);
+			return E_NO_SHARE;
+		}
+
+		uint32 currAddress = (uint32)((uint8*)virtual_address + i * PAGE_SIZE);
+
+
+		int ret = map_frame(ptr_page_directory, frameInfo, currAddress,
+		PERM_WRITEABLE | isWritable);
+		if (ret != 0) {
+			kfree(newShare);
+			return E_NO_SHARE;
+		}
+
+		newShare->framesStorage[i] = frameInfo;
+	}
+
+	LIST_INSERT_HEAD(&AllShares.shares_list, newShare);
+
+	return newShare->ID;
 }
 
 
