@@ -63,9 +63,20 @@ int getSizeOfSharedObject(int32 ownerID, char* shareName) {
 inline struct FrameInfo** create_frames_storage(int numOfFrames) {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_frames_storage()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_frames_storage is not implemented yet");
+	//panic("create_frames_storage is not implemented yet");
 	//Your Code is Here...
 
+	struct FrameInfo** framesStorage = (struct FrameInfo**) kmalloc(numOfFrames * sizeof(struct FrameInfo*));
+
+	if (framesStorage == NULL) {
+		return NULL;
+	}
+
+	 for (int i = 0; i < numOfFrames; i++) {
+	        framesStorage[i] = NULL;
+	    }
+
+	return framesStorage;
 }
 
 //=====================================
@@ -78,24 +89,34 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size,
 		uint8 isWritable) {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_share is not implemented yet");
+	//panic("create_share is not implemented yet");
 	//Your Code is Here...
-/*	struct Share* shared = NULL;
+	struct Share* shared = (struct Share*) kmalloc(sizeof(struct Share));
+	if (shared == NULL) {
+		panic("Failed to allocate memory for shared structure");
+	}
+	cprintf("kmalloc(size)\n");
 
 	void* va = kmalloc(size);
+	if (va == NULL) {
+		panic("Failed to allocate memory for share content");
+	}
 
-	shared->ID = va & 0x7FFFFFFF;
+	uint32 id = (uint32) va & 0x7FFFFFFF;
+	cprintf("made the id");
+	shared->ID = id;
 	shared->references = 1;
-
+	cprintf("ID AND REF\n");
 	shared->isWritable = isWritable;
-	shared->name = shareName;
+	strcpy(shared->name, shareName);
+	cprintf("isWritable and name\n");
 	shared->size = size;
 	shared->ownerID = ownerID;
-
+	cprintf("size and owner id\n");
 	int frames = ROUNDUP (size, PAGE_SIZE) / PAGE_SIZE;
 	shared->framesStorage = create_frames_storage(frames);
-
-	return shared;*/
+	cprintf("returning struct share with name %s\n", shared->name);
+	return shared;
 }
 
 //=============================
@@ -183,13 +204,19 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 	struct Share *it = NULL, *s = NULL;
 	LIST_FOREACH(it,&AllShares.shares_list)
 	{
-		if ((shareName == it->name) && (ownerID == it->ownerID)) {
+		if (strcmp(shareName, it->name) == 0 && ownerID == it->ownerID) {
 			s = it;
 			break;
 		}
 	}
+	release_spinlock(&AllShares.shareslock);
+
+	cprintf("Searching for shared object: ownerID=%d, shareName=%s\n", ownerID, shareName);
 	if (s == NULL)
-		return E_SHARED_MEM_NOT_EXISTS;
+	    cprintf("Shared object not found: ownerID=%d, shareName=%s\n", ownerID, shareName);
+	else
+	    cprintf("Shared object found: ID=%d, size=%d, references=%d\n", s->ID, s->size, s->references);
+
 	int numOfFrams = ROUNDUP(s->size,PAGE_SIZE) / PAGE_SIZE;
 	for (int i = 0; i < numOfFrams; i++) {
 		//struct FrameInfo** framesStorage;
@@ -206,6 +233,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 			int ret = map_frame(myenv->env_page_directory, f,
 					(uint32) virtual_address + i * PAGE_SIZE, PERM_USER);
 			if (ret != 0) {
+				cprintf("map_frame failed for frame %d: return value = %d\n", i, ret);
 				return 0;
 			}
 		}
@@ -213,7 +241,10 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 
 	s->references++;
 
-	release_spinlock(&AllShares.shareslock);
+	if (s->references == 1) {
+		memset((void *)virtual_address, 0, s->size); // Initialize shared memory with zeros
+		cprintf("Initialized shared memory at address: %p\n", virtual_address);
+	}
 
 	return s->ID;
 

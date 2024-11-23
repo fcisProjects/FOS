@@ -43,6 +43,7 @@ _main(void)
 	{
 		freeFrames = sys_calculate_free_frames() ;
 		y = sget(parentenvID,"y");
+		cprintf("parentenvID = %d\n", parentenvID);
 		expectedVA = (uint32*)(pagealloc_start + 1 * PAGE_SIZE);
 		if (y != expectedVA) panic("Get(): Returned address is not correct. Expected = %x, Actual = %x\nMake sure that you align the allocation on 4KB boundary", expectedVA, y);
 		expected = 0 ;
@@ -51,7 +52,7 @@ _main(void)
 	}
 	sys_unlock_cons();
 	//sys_unlock_cons();
-
+	cprintf("*y = %d\n", *y);
 	if (*y != 20) panic("Get(): Shared Variable is not created or got correctly") ;
 
 	//sys_lock_cons();

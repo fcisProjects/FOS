@@ -180,18 +180,29 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 	// Write your code here, remove the panic and write your code
 	//panic("sget() is not implemented yet...!!");
 	uint32 size = sys_getSizeOfSharedObject(ownerEnvID, sharedVarName);
-	if (size == 0)
+	cprintf("size = %d\n", size);
+	if (size == 0 || size == E_SHARED_MEM_NOT_EXISTS){
+		cprintf("if (size == 0 || size == E_SHARED_MEM_NOT_EXISTS)\n");
 		return NULL;
+	}
+
 	void* ptr = malloc(ROUNDUP(size, PAGE_SIZE));
-	if (ptr == NULL)
+	if (ptr == NULL){
+		cprintf("ptr == NULL\n");
 		return NULL;
+	}
 	else {
 		uint32 id = sys_getSharedObject(ownerEnvID, sharedVarName, ptr);
-		if (id != E_SHARED_MEM_NOT_EXISTS) {
+		cprintf("id = %d\n", id);
+		if (id != 0) {
+			int* int_ptr = (int*)ptr;
+			cprintf("ptr = %u and *ptr = %d\n", ptr, *int_ptr);
 			return ptr;
 		}
 	}
-	return NULL;
+
+	cprintf("finish\n");
+	return ptr;
 }
 
 //==================================================================================//
