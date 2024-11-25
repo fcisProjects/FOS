@@ -241,7 +241,7 @@ void *alloc_block_FF(uint32 size) {
 //	cprintf("will calll sbrk in block ff\n");
 	uint32*oldbrk = sbrk(1);
 
-	if (*oldbrk == -1) {
+	if (oldbrk == (void *)-1) {
 //		cprintf("00000\n");
 		return NULL;
 	} else {
