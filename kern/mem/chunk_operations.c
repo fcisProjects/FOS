@@ -186,44 +186,37 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	uint32 numOfPages = ROUNDUP(size,PAGE_SIZE) / PAGE_SIZE;
 //	cprintf("sizeToAllocate %d\n",numOfPages);
 	for (uint32 i = 0; i < numOfPages; i++) {
+		uint32 currAddress = virtual_address + i * PAGE_SIZE;
 		uint32 *page_table;
 
-		int x = get_page_table(e->env_page_directory, virtual_address+i*PAGE_SIZE,
-				&page_table);
+		int x = get_page_table(e->env_page_directory, currAddress, &page_table);
 
-		if (x == 1) {
+		if (x == TABLE_NOT_EXIST) {
 
-			page_table = (uint32 *) create_page_table(e->env_page_directory,
-					virtual_address+i*PAGE_SIZE);
+			page_table = (uint32 *) create_page_table(e->env_page_directory,currAddress);
 
 		}
 
-		page_table[PTX(virtual_address+i*PAGE_SIZE)] = page_table[PTX(virtual_address+i*PAGE_SIZE)]
+		page_table[PTX(virtual_address+i*PAGE_SIZE)] = page_table[PTX(currAddress)]
 							| (perm_mark);
 
 
 	}
-	uint32 q=0x800fe000;
-//			if (e->brk==q)
-//			{
-//				for (uint32 i = 0; i < numOfPages; i++) {
-//						uint32 *page_table;
-//
-//						int x = get_page_table(e->env_page_directory, virtual_address+i*PAGE_SIZE,
-//								&page_table);
-//
-//						cprintf("addd %p\n",virtual_address+i*PAGE_SIZE);
-//
-//
-//						cprintf("entryyy %d \n",page_table[PTX(virtual_address+i*PAGE_SIZE)] );
-//
-//
-//
-//					}
-//			}
+	/*uint32 q=0x800fe000;
+	if (e->brk == q) {
+		for (uint32 i = 0; i < numOfPages; i++) {
+			uint32 *page_table;
 
+			int x = get_page_table(e->env_page_directory,
+					virtual_address + i * PAGE_SIZE, &page_table);
 
+			cprintf("addd %p\n", virtual_address + i * PAGE_SIZE);
 
+			cprintf("entryyy %d \n",
+					page_table[PTX(virtual_address+i*PAGE_SIZE)]);
+
+		}
+	}*/
 }
 
 //=====================================

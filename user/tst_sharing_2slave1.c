@@ -69,9 +69,11 @@ _main(void)
 	sys_unlock_cons();
 	//sys_unlock_cons();
 
+	cprintf("*x = %d\n", *x);
 	if (*x != 10) panic("Get(): Shared Variable is not created or got correctly") ;
 
 	*z = *x + *y ;
+	cprintf("*z = %d\n", *z);
 	if (*z != 30) panic("Get(): Shared Variable is not created or got correctly") ;
 
 	//To indicate that it's completed successfully
