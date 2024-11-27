@@ -138,7 +138,7 @@ void* sys_sbrk(int numOfPages) {
 	/*Remove this line before start coding*/
 	//return (void*)-1 ;
 	/*====================================*/
-
+cprintf("in sys_sbrkkk--------------------------------------------------------------------------------\n");
 	//lazy allocation: use bit no. 9 as used bit
 	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
 
@@ -159,6 +159,8 @@ void* sys_sbrk(int numOfPages) {
 //	cprintf("old brk %p\n",oldBrk);
 //	cprintf("new brk %p\n",env->brk);
 //	cprintf("sizeToAllocate %d\n",sizeToAllocate);
+	cprintf(" alocated in sys_sbrk------------------+++++++++++++++++++ \n");
+
 	allocate_user_mem(env,oldBrk,sizeToAllocate);
 
 
@@ -183,8 +185,8 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 //	cprintf("in allocate_user_mem\n");
 	uint32 perm_mark = 0x400;
 
-	uint32 numOfPages = ROUNDUP(size,PAGE_SIZE) / PAGE_SIZE;
-//	cprintf("sizeToAllocate %d\n",numOfPages);
+	uint32 numOfPages = (ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE;
+    cprintf("sizeToAllocate in allocate user mem ---------------------------------------- %d\n",numOfPages);
 	for (uint32 i = 0; i < numOfPages; i++) {
 		uint32 currAddress = virtual_address + i * PAGE_SIZE;
 		uint32 *page_table;
@@ -192,6 +194,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 		int x = get_page_table(e->env_page_directory, currAddress, &page_table);
 
 		if (x == TABLE_NOT_EXIST) {
+		    cprintf("allocat-e-d pages --------------------------- in allocate user mem ---------------------------------------- \n");
 
 			page_table = (uint32 *) create_page_table(e->env_page_directory,currAddress);
 

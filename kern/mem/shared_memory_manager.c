@@ -66,11 +66,16 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames) {
 	//panic("create_frames_storage is not implemented yet");
 	//Your Code is Here...
 
-	//struct FrameInfo** storage = (struct FrameInfo**)malloc(numOfFrames * sizeof(struct FrameInfo));
-	//return storage;
-	//uint32 x=malloc(numOfFrames*PAGE_SIZE);
+
+	cprintf(" before kmalloc of the array of the pointer \n");
+
 	struct FrameInfo** storage = kmalloc(
 			(uint32) (numOfFrames * sizeof(struct FrameInfo)));
+	cprintf(" the size of the frame info %d \n",sizeof(struct FrameInfo ));
+	cprintf(" the num of the frame info %d \n",numOfFrames);
+
+	//cprintf(" the size of the frame info without size of va anf page size  %d \n",sizeof(struct FrameInfo)-(2*sizeof(uint32)));
+
 	if (storage == NULL) {
 		return NULL;
 	}
@@ -95,6 +100,7 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size,
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("create_share is not implemented yet");
 	//Your Code is Here...
+	cprintf(" create the crated ogj %d \n",(sizeof(struct Share)));
 
 	struct Share* shared = kmalloc(sizeof(struct Share));
 	if (shared != NULL) {
@@ -171,16 +177,17 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 		return E_NO_SHARE;
 	}
 
-	uint32 numOfFrames = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+	uint32 numOfFrames = (ROUNDUP(size, PAGE_SIZE)) / PAGE_SIZE;
 	newShare->size = numOfFrames * PAGE_SIZE;
-	cprintf(" the total frames allocated in create  %d \n", numOfFrames);
+	cprintf(" the total frames  allocated in create in kernel  %d \n",ROUNDUP(newShare->size , PAGE_SIZE) / PAGE_SIZE);
 
 	for (uint32 i = 0; i < numOfFrames; i++) {
 
 		struct FrameInfo *frameInfo = NULL;
 		int res = allocate_frame(&frameInfo);
 		if (res == E_NO_MEM) {
-			kfree(newShare->framesStorage[i]);
+			//kfree(newShare->framesStorage[i]);
+			kfree(newShare);
 			return E_NO_SHARE;
 		}
 
@@ -190,17 +197,19 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 		int ret = map_frame(myenv->env_page_directory, frameInfo, currAddress,
 		PERM_WRITEABLE | PERM_USER);
 
-
 		if (ret != 0) {
-			kfree(newShare->framesStorage[i]);
+			//kfree(newShare->framesStorage[i]);
+			kfree(newShare);
+
 			cprintf(" not map\n ");
 			return E_NO_SHARE;
 		}
+        cprintf(" the index %d  --------------------------> \n",i);
 
 		newShare->framesStorage[i] = frameInfo;
 	}
-
 	LIST_INSERT_TAIL(&AllShares.shares_list, newShare);
+
 
 	return newShare->ID;
 }
@@ -226,10 +235,8 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 	}
 	if (s == NULL) {
 		release_spinlock(&AllShares.shareslock);
-
 		return E_SHARED_MEM_NOT_EXISTS;
 	}
-
 	int numOfFrams = ROUNDUP(s->size,PAGE_SIZE) / PAGE_SIZE;
 	for (int i = 0; i < numOfFrams; i++) {
 		//struct FrameInfo** framesStorage;
@@ -238,29 +245,27 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 			int ret = map_frame(myenv->env_page_directory, f,
 					(uint32) virtual_address + i * PAGE_SIZE,
 					PERM_WRITEABLE | PERM_USER);
+	        cprintf(" the index in sget  %d  --------------------------> \n",i);
+
+
+
 			if (ret != 0) {
 				release_spinlock(&AllShares.shareslock);
-
 				return 0;
 			}
-
-		} else {
+		}
+		else {
 			int ret = map_frame(myenv->env_page_directory, f,
 					(uint32) virtual_address + i * PAGE_SIZE, PERM_USER);
 			if (ret != 0) {
 				release_spinlock(&AllShares.shareslock);
-
 				return 0;
 			}
 		}
 	}
-
 	s->references++;
-
 	release_spinlock(&AllShares.shareslock);
-
 	return s->ID;
-
 }
 
 //==================================================================================//

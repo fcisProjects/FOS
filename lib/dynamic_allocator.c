@@ -269,7 +269,7 @@ void *alloc_block_FF(uint32 size) {
 			return alloc_block_FF(size);
 
 		} else {
-			cprintf("case A\n");
+			//cprintf("case A\n");
 			struct BlockElement* newblock = (struct BlockElement*) oldbrk;
 			set_block_data(newblock, PAGE_SIZE, 0);
 

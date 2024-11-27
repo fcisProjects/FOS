@@ -67,6 +67,9 @@ void* sbrk(int numOfPages) {
 	//[PROJECT'24.MS2] Implement this function
 	// Write your code here, remove the panic and write your code
 	//panic("sbrk() is not implemented yet...!!");
+	cprintf(
+			"in sbrk numOfPages %d -------------------------------------------------------------------\n",
+			numOfPages);
 	if (numOfPages == 0) {
 		//cprintf("0\n");
 		return (void*) brk;
@@ -169,6 +172,10 @@ void* kmalloc(unsigned int size) {
 	//for (uint32 va = start_add; va < KERNEL_HEAP_MAX; va += PAGE_SIZE){
 
 	if (counter == numPages) {
+		cprintf(
+				" the num of the pages in kamlloc    %d  --------------------------> \n",
+				numPages);
+
 		for (int x = 0; x < numPages; ++x) {
 			struct FrameInfo* new_frame;
 			int allocResult = allocate_frame(&new_frame);
@@ -182,6 +189,11 @@ void* kmalloc(unsigned int size) {
 			PERM_USED | PERM_WRITEABLE | PERM_PRESENT);
 
 			new_frame->va = start_add;
+
+			cprintf(
+					" the index in kmalloc allocated %d -------------- --------------------------> \n",
+					x);
+
 			if (mapResult != 0) {
 				cprintf("kmalloc: Failed to map frame at VA %x\n", start_add);
 				return NULL;
@@ -311,8 +323,39 @@ unsigned int kheap_virtual_address(unsigned int physical_address) {
 //	A call with new_size = zero is equivalent to kfree().
 
 void *krealloc(void *virtual_address, uint32 new_size) {
-//TODO: [PROJECT'24.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc
-// Write your code here, remove the panic and write your code
-	return NULL;
-	panic("krealloc() is not implemented yet...!!");
+	//TODO: [PROJECT'24.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc
+	// Write your code here, remove the panic and write your code
+	//	return NULL;
+	//	panic("krealloc() is not implemented yet...!!");
+
+	if (virtual_address == NULL)
+		return kmalloc(new_size);
+	if (new_size == 0) {
+		kfree(virtual_address);
+		return (void *) NULL;
+	}
+	if (virtual_address >= (void*) KERNEL_HEAP_START
+			&& virtual_address < (void*) end) {
+
+		if ((new_size + 8) > DYN_ALLOC_MAX_BLOCK_SIZE) {
+			free_block(virtual_address);
+			return kmalloc(new_size);
+		} else {
+			return realloc_block_FF(virtual_address, new_size);
+		}
+
+	} else if (virtual_address >= (void*) end + PAGE_SIZE
+			&& virtual_address < (void*) KERNEL_HEAP_MAX) {
+
+		if (new_size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+			kfree(virtual_address);
+			return realloc_block_FF(virtual_address, new_size);
+		} else {
+			kfree(virtual_address);
+			return kmalloc(new_size);
+		}
+
+	}
+return (void*)NULL;
 }
+
