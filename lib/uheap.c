@@ -51,13 +51,15 @@ void* malloc(uint32 size) {
 		for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
 			if (allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address == 0) {
 				counter++;
-			}
-			else {
+			} else {
 				counter = 0;
 				va =
 						allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
 								+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].numOfPages
 										* PAGE_SIZE - PAGE_SIZE;
+//				va =
+//						allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
+//								+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].size - PAGE_SIZE;
 			}
 
 			if (counter == numPages) {
@@ -68,11 +70,14 @@ void* malloc(uint32 size) {
 		}
 
 		if (start_add != 0) {
-			cprintf("allocated framer before allocate user mem ========================= %d\n", numPages);
+//			cprintf(
+//					"allocated framer before allocate user mem ========================= %d\n",
+//					numPages);
 			allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].address =
 					start_add;
 			allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].numOfPages =
 					numPages;
+			//sys_allocate_user_mem(start_add, numPages * PAGE_SIZE);
 			sys_allocate_user_mem(start_add, numPages * PAGE_SIZE);
 
 			return (void*) start_add;
@@ -163,15 +168,22 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 	//panic("smalloc() is not implemented yet...!!");
 
 	uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
-	cprintf(" the total frames allocated in smalloc  %d \n", numPages);
+//	cprintf(" the total frames allocated in smalloc before   %d \n", numPages);
 
+
+	int i = 0;
 	uint32 baseVA = myEnv->end + PAGE_SIZE;
 	uint32 counter = 0, start_add = 0;
-
 	for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
+
 		if (allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address == 0) {
+//			cprintf(
+//					" %d  the index in the array in smalloc %d \n ********************************** ",
+//					i, (va - USER_HEAP_START) / PAGE_SIZE);
 			counter++;
-		} else {
+			++i;
+		}
+		else {
 			counter = 0;
 			va = allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
 					+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].numOfPages
@@ -181,6 +193,8 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 		if (counter == numPages) {
 
 			start_add = va - (numPages - 1) * PAGE_SIZE;
+//			cprintf(" the addr of the start add in smalloc %x\n***************",
+//					start_add);
 			break;
 		}
 	}
@@ -190,8 +204,27 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 				start_add;
 		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].numOfPages =
 				numPages;
-		int ret = sys_createSharedObject(sharedVarName, size, isWritable,
-				(void*) start_add);
+
+//		cprintf(
+//				"the smallloc +++++++++++++++ the frame*page size  passing to the create  %d \n",
+//				numPages * PAGE_SIZE);
+//		cprintf(
+//				"the smallloc +++++++++++++++ the size passing to the create  %d \n",
+//				size);
+//
+//		cprintf(
+//				"the smallloc +++++++++++++++ the addr passing to create   %x \n",
+//				start_add);
+
+		//int frames = sys_calculate_free_frames();
+//		cprintf(
+//				"the smallloc +++++++++++++++ the free frames in the RAM   %d \n",
+//				frames);
+		int ret = sys_createSharedObject(sharedVarName, numPages * PAGE_SIZE,
+				isWritable, (void*) start_add);
+//		cprintf(
+//				"the smallloc +++++++++++++++ the free frames in the RAM after the allocate  %d \n",
+//				frames-sys_calculate_free_frames());
 
 		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
 			return NULL;
@@ -199,15 +232,6 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 		return (void*) start_add;
 	}
 
-//	void* ptr = malloc(ROUNDUP(size, PAGE_SIZE));
-//	if (ptr != NULL) {
-//		int ret = sys_createSharedObject(sharedVarName, size, isWritable, ptr);
-//		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
-//			return NULL;
-//		} else {
-//			return ptr;
-//		}
-//	}
 	return NULL;
 }
 
@@ -224,7 +248,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 		return NULL;
 
 	uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
-	cprintf(" the total frames allocated in sget  %d \n", numPages);
+	//cprintf(" the total frames allocated in sget  %d \n", numPages);
 
 	uint32 baseVA = myEnv->end + PAGE_SIZE;
 	uint32 counter = 0, start_add = 0;
@@ -237,6 +261,9 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 			va = allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
 					+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].numOfPages
 							* PAGE_SIZE - PAGE_SIZE;
+//			va =
+//					allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
+//							+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].size- PAGE_SIZE;
 		}
 
 		if (counter == numPages) {
@@ -251,6 +278,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 				start_add;
 		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].numOfPages =
 				numPages;
+
 		uint32 id = sys_getSharedObject(ownerEnvID, sharedVarName,
 				(void*) start_add);
 		if (id != E_SHARED_MEM_NOT_EXISTS) {

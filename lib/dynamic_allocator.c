@@ -413,12 +413,13 @@ void free_block(void* va) {
 
 //=========================================
 // [6] REALLOCATE BLOCK BY FIRST FIT:
-//=========================================
-void *realloc_block_FF(void* va, uint32 new_size) {
+void *realloc_block_FF(void* va, uint32 new_size)
+{
 	//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("realloc_block_FF is not implemented yet");
 	//Your Code is Here...
+
 
 	uint32 current_size = get_block_size(va);
 	if (new_size == 0 && va != (void*) NULL) {
@@ -441,11 +442,15 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 
 	if (new_size + 8 > get_block_size(va)) {
 
-		int8 free_or_not = is_free_block((void *) ((va_next)));
-		if (free_or_not == 0) {
-			void *newVA = alloc_block_FF(new_size);
-			free_block(va);
-			return newVA;
+		int8 free = is_free_block((void *) ((va_next)));
+		if (free == 0) {
+			//void *newVA = alloc_block_FF(new_size);
+			//memcpy(newVA, va, current_size - 8);
+
+			//free_block(va);
+
+			return va;
+
 		} else {
 
 			if (get_block_size((va_next))
@@ -453,11 +458,14 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 
 				struct BlockElement *element;
 				void *newVA = alloc_block_FF(new_size);
+
+				memcpy(newVA, va, current_size - 8);
+
 				free_block(va);
 
 				return newVA;
 
-			} else if (get_block_size((void *) (va_next))
+			} else if (get_block_size((va_next))
 					- ((new_size + 8) - get_block_size(va)) < 16) {
 
 				set_block_data(va, new_size + 8, 1);
@@ -487,7 +495,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				set_block_data(nextVA,
 						((size_of_next_block + oldsize) - (new_size + 8)), 0);
 
-				print_blocks_list(freeBlocksList);
+				//print_blocks_list(freeBlocksList);
 
 				return va;
 			}
@@ -505,15 +513,53 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 					(struct BlockElement *) ((uint8*) va);
 
 			set_block_data(va, size_of_new_block, 1);
-			set_block_data(header_next3, size_of_block - size_of_new_block, 0);
+			struct BlockElement* nextFreeBlock;
+			bool flag=0;
+			uint32 sizeOfNextFreeBlock;
+			LIST_FOREACH(nextFreeBlock,&freeBlocksList){
+
+				if((uint32)(nextFreeBlock) == (uint32)va + size_of_block){
+					flag=1;
+					sizeOfNextFreeBlock = get_block_size(nextFreeBlock);
+					LIST_REMOVE(&freeBlocksList,nextFreeBlock);
+					break;
+				}
+			}
+
+			if(flag == 1){
+				set_block_data(va + new_size + 8,(size_of_block - size_of_new_block) + sizeOfNextFreeBlock, 0);
+
+			}
+			else{
+				set_block_data(va + new_size + 8, size_of_block - new_size - 8, 0);
+			}
 
 			return va;
+
 		} else {
 
 			struct BlockElement *header_next4 =
-					(struct BlockElement*) (uint8 *) va;
+					(struct BlockElement*) (uint8 *) va + new_size + 8;
 
-			set_block_data(va, get_block_size(va), 1);
+			struct BlockElement* nextFreeBlock;
+			bool flag = 0;
+			uint32 sizeOfNextFreeBlock;
+			LIST_FOREACH(nextFreeBlock,&freeBlocksList)
+			{
+
+				if ((uint32) (nextFreeBlock) == (uint32) va + size_of_block) {
+					flag = 1;
+					sizeOfNextFreeBlock = get_block_size(nextFreeBlock);
+					LIST_REMOVE(&freeBlocksList, nextFreeBlock);
+					break;
+				}
+			}
+
+			if (flag == 1) {
+				set_block_data(va, new_size + 8, 1);
+				cprintf("in coalesce/n");
+				set_block_data(va + new_size + 8, (size_of_block - new_size + 8) + sizeOfNextFreeBlock, 0);
+			}
 
 			return va;
 

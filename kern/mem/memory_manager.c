@@ -363,7 +363,6 @@ int map_frame(uint32 *ptr_page_directory, struct FrameInfo *ptr_frame_info, uint
 	{
 #if USE_KHEAP
 		{
-	        cprintf(" create page table im map frame   --------------------------> \n");
 
 			ptr_page_table = create_page_table(ptr_page_directory, (uint32)virtual_address);
 			//cprintf("======>page table created using kheap for VA %x at dir = %x PT = %x\n", virtual_address, ptr_page_directory[PDX(virtual_address)], ptr_page_table);

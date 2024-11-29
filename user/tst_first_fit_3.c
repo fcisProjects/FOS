@@ -45,13 +45,17 @@ void _main(void)
 	//[1] Allocate all
 	cprintf("\n%~[1] Allocate spaces of different sizes in PAGE ALLOCATOR\n");
 	{
+
 		//Allocate Shared 1 MB
 		freeFrames = sys_calculate_free_frames() ;
 		usedDiskPages = sys_pf_calculate_allocated_pages();
+		//cprintf("the dframes before test +++++++++++++++ %d \n",freeFrames-sys_calculate_free_frames);
+
 		ptr_allocations[0] = smalloc("x", 1*Mega, 1);
 		if (ptr_allocations[0] != (uint32*)pagealloc_start) {is_correct = 0; cprintf("Returned address is not correct. check the setting of it and/or the updating of the shared_mem_free_address");}
 		expected = 256+1; /*256pages +1table*/
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in first smallloc +++++++++++++++ %d \n",diff);
 		if (diff < expected || diff > expected +1+1 /*extra 1 page & 1 table for sbrk (at max)*/) {is_correct = 0; cprintf("Wrong allocation (current=%d, expected=%d): make sure that you allocate the required space in the user environment and add its frames to frames_storage", freeFrames - sys_calculate_free_frames(), expected);}
 		if( (sys_pf_calculate_allocated_pages() - usedDiskPages) !=  0) {is_correct = 0; cprintf("Wrong page file allocation: ");}
 
@@ -73,6 +77,8 @@ void _main(void)
 		if( (sys_pf_calculate_allocated_pages() - usedDiskPages) !=  0) {is_correct = 0; cprintf("Wrong page file allocation: ");}
 		expected = 0;
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in sec malloc  ++++++ +++++++++++++++ %d \n",diff);
+
 		if (diff != expected)
 		{is_correct = 0; cprintf("Wrong allocation by malloc(): expected = %d, actual = %d", expected, diff);}
 
@@ -85,6 +91,8 @@ void _main(void)
 		if( (sys_pf_calculate_allocated_pages() - usedDiskPages) !=  0) {is_correct = 0; cprintf("Wrong page file allocation: ");}
 		expected = 1; /*1table since pagealloc_start starts at UH + 32MB + 4KB*/
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in sec malloc  ++++++ +++++++++++++++ %d \n",diff);
+
 		if (diff != expected)
 		{is_correct = 0; cprintf("Wrong allocation by malloc(): expected = %d, actual = %d", expected, diff);}
 
@@ -97,6 +105,8 @@ void _main(void)
 		if( (sys_pf_calculate_allocated_pages() - usedDiskPages) !=  0) {is_correct = 0; cprintf("Wrong page file allocation: ");}
 		expected = 0;
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in sec malloc  ++++++ +++++++++++++++ %d \n",diff);
+
 		if (diff != expected)
 		{is_correct = 0; cprintf("Wrong allocation by malloc(): expected = %d, actual = %d", expected, diff);}
 
@@ -108,6 +118,8 @@ void _main(void)
 		{is_correct = 0; cprintf("Returned address is not correct. check the setting of it and/or the updating of the shared_mem_free_address");}
 		expected = 512+1; /*512pages +1table*/
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in sec smallloc +++++++++++++++ %d \n",diff);
+
 		if (diff < expected || diff > expected +1+1 /*extra 1 page & 1 table for sbrk (at max)*/)
 		{is_correct = 0; cprintf("5 Wrong allocation (current=%d, expected=%d): make sure that you allocate the required space in the user environment and add its frames to frames_storage", freeFrames - sys_calculate_free_frames(), expected);}
 		if( (sys_pf_calculate_allocated_pages() - usedDiskPages) !=  0) {is_correct = 0; cprintf("5 Wrong page file allocation: ");}
@@ -121,6 +133,8 @@ void _main(void)
 		if( (sys_pf_calculate_allocated_pages() - usedDiskPages) !=  0) {is_correct = 0; cprintf("6 Wrong page file allocation: ");}
 		expected = 0;
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in sec malloc  ++++++ +++++++++++++++ %d \n",diff);
+
 		if (diff != expected) {is_correct = 0; cprintf("6 Wrong allocation by malloc(): expected = %d, actual = %d", expected, diff);}
 
 		//Allocate Shared 3 MB (New Table)
@@ -130,6 +144,8 @@ void _main(void)
 		if (ptr_allocations[7] != (uint32*)(pagealloc_start + 11*Mega)) {is_correct = 0; cprintf("Returned address is not correct. check the setting of it and/or the updating of the shared_mem_free_address");}
 		expected = 768+1+1; /*768pages +1table +1page for framesStorage by Kernel Page Allocator since it exceed 2KB size*/
 		diff = (freeFrames - sys_calculate_free_frames());
+		//cprintf("the diff in sec malloc  ++++++ +++++++++++++++ %d \n",diff);
+
 		if (diff < expected || diff > expected +1+1 /*extra 1 page & 1 table for sbrk (at max)*/)
 		{is_correct = 0; cprintf("7 Wrong allocation (current=%d, expected=%d): make sure that you allocate the required space in the user environment and add its frames to frames_storage", freeFrames - sys_calculate_free_frames(), expected);}
 		//		if ((freeFrames - sys_calculate_free_frames()) !=  768+2+2) {is_correct = 0; cprintf("Wrong allocation: make sure that you allocate the required space in the user environment and add its frames to frames_storage");

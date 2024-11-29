@@ -324,7 +324,7 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
-	cprintf("in sys_allocate_user_mem \n");
+	//cprintf("in sys_allocate_user_mem \n");
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
 	if (virtual_address == (uint32) NULL || virtual_address == 0) {
 		env_exit();
@@ -334,7 +334,7 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	} else if (size + virtual_address > USER_HEAP_MAX) {
 		env_exit();
 	}
-	cprintf("will call allocate_user_mem \n");
+	//cprintf("will call allocate_user_mem \n");
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }

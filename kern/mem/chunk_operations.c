@@ -138,7 +138,6 @@ void* sys_sbrk(int numOfPages) {
 	/*Remove this line before start coding*/
 	//return (void*)-1 ;
 	/*====================================*/
-cprintf("in sys_sbrkkk--------------------------------------------------------------------------------\n");
 	//lazy allocation: use bit no. 9 as used bit
 	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
 
@@ -159,13 +158,17 @@ cprintf("in sys_sbrkkk----------------------------------------------------------
 //	cprintf("old brk %p\n",oldBrk);
 //	cprintf("new brk %p\n",env->brk);
 //	cprintf("sizeToAllocate %d\n",sizeToAllocate);
-	cprintf(" alocated in sys_sbrk------------------+++++++++++++++++++ \n");
+	//cprintf(" alocated in sys_sbrk------------------+++++++++++++++++++ \n");
 
-	allocate_user_mem(env,oldBrk,sizeToAllocate);
-
+	allocate_user_mem(env, oldBrk, sizeToAllocate);
 
 	return (void*) oldBrk;
 }
+
+struct ws_info {
+	uint32 virtual_address;
+};
+struct ws_info ws_table[(USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE];
 
 //=====================================
 // 1) ALLOCATE USER MEMORY:
@@ -177,16 +180,14 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 //	return;
 	/*====================================*/
 
-
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
 	//panic("allocate_user_mem() is not implemented yet...!!");
-
 //	cprintf("in allocate_user_mem\n");
 	uint32 perm_mark = 0x400;
 
-	uint32 numOfPages = (ROUNDUP(size,PAGE_SIZE)) / PAGE_SIZE;
-    cprintf("sizeToAllocate in allocate user mem ---------------------------------------- %d\n",numOfPages);
+	uint32 numOfPages = (ROUNDUP(size, PAGE_SIZE)) / PAGE_SIZE;
+	// cprintf("sizeToAllocate in allocate user mem ---------------------------------------- %d\n",numOfPages);
 	for (uint32 i = 0; i < numOfPages; i++) {
 		uint32 currAddress = virtual_address + i * PAGE_SIZE;
 		uint32 *page_table;
@@ -194,32 +195,36 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 		int x = get_page_table(e->env_page_directory, currAddress, &page_table);
 
 		if (x == TABLE_NOT_EXIST) {
-		    cprintf("allocat-e-d pages --------------------------- in allocate user mem ---------------------------------------- \n");
+			//cprintf("allocat-e-d pages --------------------------- in allocate user mem ---------------------------------------- \n");
 
-			page_table = (uint32 *) create_page_table(e->env_page_directory,currAddress);
+			page_table = (uint32 *) create_page_table(e->env_page_directory,
+					currAddress);
 
 		}
 
-		page_table[PTX(virtual_address+i*PAGE_SIZE)] = page_table[PTX(currAddress)]
-							| (perm_mark);
+		page_table[PTX(currAddress)] = page_table[PTX(currAddress)]
+				| (perm_mark);
 
+		// cprintf(" %d ::marked pages --------------------------- in allocate user mem ---------------------///////------------------- \n",i);
+		uint32 index = (currAddress - USER_HEAP_START) / PAGE_SIZE;
+		ws_table[index].virtual_address = currAddress;
 
 	}
 	/*uint32 q=0x800fe000;
-	if (e->brk == q) {
-		for (uint32 i = 0; i < numOfPages; i++) {
-			uint32 *page_table;
+	 if (e->brk == q) {
+	 for (uint32 i = 0; i < numOfPages; i++) {
+	 uint32 *page_table;
 
-			int x = get_page_table(e->env_page_directory,
-					virtual_address + i * PAGE_SIZE, &page_table);
+	 int x = get_page_table(e->env_page_directory,
+	 virtual_address + i * PAGE_SIZE, &page_table);
 
-			cprintf("addd %p\n", virtual_address + i * PAGE_SIZE);
+	 cprintf("addd %p\n", virtual_address + i * PAGE_SIZE);
 
-			cprintf("entryyy %d \n",
-					page_table[PTX(virtual_address+i*PAGE_SIZE)]);
+	 cprintf("entryyy %d \n",
+	 page_table[PTX(virtual_address+i*PAGE_SIZE)]);
 
-		}
-	}*/
+	 }
+	 }*/
 }
 
 //=====================================
@@ -238,39 +243,25 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	uint32 pages_num = ROUNDUP(size,PAGE_SIZE) / PAGE_SIZE;
 	uint32 perm_mark = 0x400;
 	for (int i = 0; i < pages_num; ++i) {
+		uint32 current_va = virtual_address + i * PAGE_SIZE;
+
 		uint32 *page_table;
 		int x = get_page_table(e->env_page_directory, virtual_address,
 				&page_table);
 		if (page_table != NULL) {
-			page_table[PTX(virtual_address)] = page_table[PTX(virtual_address)]
+			page_table[PTX(current_va)] = page_table[PTX(current_va)]
 					& (~perm_mark);
 			//virtual_address = virtual_address & (~perm_mark);
-			pf_remove_env_page(e, virtual_address);
-			struct WorkingSetElement* x;
-			LIST_FOREACH(x,&(e->page_WS_list))
-			{
-				if (x->virtual_address == virtual_address) {
-					unmap_frame(e->env_page_directory, virtual_address);
-					break;
-				}
+			pf_remove_env_page(e, current_va);
+			uint32 index = (current_va - USER_HEAP_START) / PAGE_SIZE;
+			if (ws_table[index].virtual_address == current_va) {
+
+				unmap_frame(e->env_page_directory, current_va);
+				env_page_ws_invalidate(e, current_va);
+				ws_table[index].virtual_address = 0;
 			}
-			env_page_ws_invalidate(e, virtual_address);
-			virtual_address += PAGE_SIZE;
 		}
 	}
-
-//	// unmark
-//	size = ROUNDUP(size,PAGE_SIZE)/ PAGE_SIZE;
-//	for (int i = 0; i < size; i++) {
-//		uint32* ptr_table = NULL;
-//
-//		get_page_table(e->env_page_directory,virtual_address +i*PAGE_SIZE,&ptr_table);
-//
-//		ptr_table[PTX(virtual_address)]=0;
-//
-//	}
-//	pf_remove_env_page(e, virtual_address);
-//	env_page_ws_invalidate(e,virtual_address);
 
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
 }

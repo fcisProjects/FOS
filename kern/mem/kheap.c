@@ -67,9 +67,7 @@ void* sbrk(int numOfPages) {
 	//[PROJECT'24.MS2] Implement this function
 	// Write your code here, remove the panic and write your code
 	//panic("sbrk() is not implemented yet...!!");
-	cprintf(
-			"in sbrk numOfPages %d -------------------------------------------------------------------\n",
-			numOfPages);
+
 	if (numOfPages == 0) {
 		//cprintf("0\n");
 		return (void*) brk;
@@ -172,9 +170,9 @@ void* kmalloc(unsigned int size) {
 	//for (uint32 va = start_add; va < KERNEL_HEAP_MAX; va += PAGE_SIZE){
 
 	if (counter == numPages) {
-		cprintf(
-				" the num of the pages in kamlloc    %d  --------------------------> \n",
-				numPages);
+//		cprintf(
+//				" the num of the pages in kamlloc    %d  --------------------------> \n",
+//				numPages);
 
 		for (int x = 0; x < numPages; ++x) {
 			struct FrameInfo* new_frame;
@@ -190,12 +188,12 @@ void* kmalloc(unsigned int size) {
 
 			new_frame->va = start_add;
 
-			cprintf(
-					" the index in kmalloc allocated %d -------------- --------------------------> \n",
-					x);
+//			cprintf(
+//					" the index in kmalloc allocated %d -------------- --------------------------> \n",
+//					x);
 
 			if (mapResult != 0) {
-				cprintf("kmalloc: Failed to map frame at VA %x\n", start_add);
+//				cprintf("kmalloc: Failed to map frame at VA %x\n", start_add);
 				return NULL;
 			}
 			start_add = start_add + PAGE_SIZE;
