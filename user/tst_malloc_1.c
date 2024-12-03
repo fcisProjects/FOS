@@ -68,11 +68,16 @@ void _main(void)
 			usedDiskPages = sys_pf_calculate_allocated_pages() ;
 			ptr_allocations[0] = malloc(2*Mega-kilo);
 			if ((uint32) ptr_allocations[0] != (pagealloc_start)) {is_correct = 0; cprintf("1 Wrong start address for the allocated space... \n");}
+
+			//cprintf("pagealloc_start %p  you alloc in %p\n",pagealloc_start,ptr_allocations[0] );
+
 			expectedNumOfFrames = 1 /*table*/ ;
 			actualNumOfFrames = freeFrames - sys_calculate_free_frames();
 			if (!inRange(actualNumOfFrames, expectedNumOfFrames, expectedNumOfFrames + 2 /*Block Alloc: max of 1 page & 1 table*/))
 			{is_correct = 0; cprintf("1 Wrong allocation: unexpected number of pages that are allocated in memory! Expected = [%d, %d], Actual = %d\n", expectedNumOfFrames, expectedNumOfFrames+2, actualNumOfFrames);}
 			if ((sys_pf_calculate_allocated_pages() - usedDiskPages) != 0) { is_correct = 0; cprintf("1 Extra or less pages are allocated in PageFile\n");}
+
+
 
 			freeFrames = sys_calculate_free_frames() ;
 			lastIndexOfByte = (2*Mega-kilo)/sizeof(char) - 1;
@@ -84,9 +89,14 @@ void _main(void)
 			if (!inRange(actualNumOfFrames, expectedNumOfFrames, expectedNumOfFrames + 2 /*Block Alloc: max of 1 page & 1 table*/))
 			{ is_correct = 0; cprintf("1 Wrong fault handler: pages are not loaded successfully into memory/WS. Expected diff in frames at least = %d, actual = %d\n", expectedNumOfFrames, actualNumOfFrames);}
 
+
+
 			uint32 expectedVAs[2] = { ROUNDDOWN((uint32)(&(byteArr[0])), PAGE_SIZE), ROUNDDOWN((uint32)(&(byteArr[lastIndexOfByte])), PAGE_SIZE)} ;
 			found = sys_check_WS_list(expectedVAs, 2, 0, 2);
 			if (found != 1) { is_correct = 0; cprintf("1 malloc: page is not added to WS\n");}
+
+
+
 		}
 		//cprintf("4\n");
 		if (is_correct)
@@ -106,7 +116,7 @@ void _main(void)
 			if (!inRange(actualNumOfFrames, expectedNumOfFrames, expectedNumOfFrames + 2 /*Block Alloc: max of 1 page & 1 table*/))
 			{is_correct = 0; cprintf("2 Wrong allocation: unexpected number of pages that are allocated in memory! Expected = [%d, %d], Actual = %d\n", expectedNumOfFrames, expectedNumOfFrames+2, actualNumOfFrames);}
 			if ((sys_pf_calculate_allocated_pages() - usedDiskPages) != 0) { is_correct = 0; cprintf("2 Extra or less pages are allocated in PageFile\n");}
-
+//			cprintf("\n\n ptr_allocations[1]  = %p \n\n",pagealloc_start + 2*Mega);
 			freeFrames = sys_calculate_free_frames() ;
 			shortArr = (short *) ptr_allocations[1];
 			lastIndexOfShort = (2*Mega-kilo)/sizeof(short) - 1;

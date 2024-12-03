@@ -26,7 +26,7 @@ struct user_heap_info {
 struct user_heap_info allocPages[((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE)];
 
 void* malloc(uint32 size) {
-	//cprintf("in malloc \n");
+//	cprintf("in malloc \n");
 
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
@@ -67,8 +67,9 @@ void* malloc(uint32 size) {
 		}
 
 		if (start_add != 0) {
-			//cprintf("start add %p\n", start_add);
+//			cprintf("start add %p\n", start_add);
 			sys_allocate_user_mem(start_add, numPages * PAGE_SIZE);
+
 			allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].address =
 					start_add;
 			allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].numOfPages =
@@ -76,42 +77,6 @@ void* malloc(uint32 size) {
 
 			return (void*) start_add;
 		}
-//		uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
-//
-//		uint32 baseVA = myEnv->end+PAGE_SIZE;
-//
-//		int counter = 0;
-//		uint32 start_add;
-//		uint32 i=0;
-//
-//
-//
-//		for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
-//			cprintf("1 \n");
-//			if ( allocPages[USER_HEAP_START-baseVA].address!=va)
-//			{
-//				cprintf("2 \n");
-//				counter++;
-//			}
-//			else
-//			{
-//				counter=0;
-//				va = allocPages[va-baseVA].address+allocPages[va-baseVA].size*PAGE_SIZE;
-//				i++;
-//				break;
-//			}
-//
-//			if (counter == numPages) {
-//				cprintf("1 \n");
-//				allocPages[va-baseVA].address=va;
-//				allocPages[va-baseVA].size=size;
-//				cprintf("2 \n");
-//				start_add = va;
-//				break;
-//			}
-//		}
-//		cprintf(" start_add %x  \n",start_add);
-//		sys_allocate_user_mem(baseVA,size);
 
 	}
 	return NULL;
@@ -160,15 +125,53 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
 	//panic("smalloc() is not implemented yet...!!");
-	void* ptr = malloc(ROUNDUP(size, PAGE_SIZE));
-	if (ptr != NULL) {
-		int ret = sys_createSharedObject(sharedVarName, size, isWritable, ptr);
-		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
-			return NULL;
+
+	uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+//	cprintf(" the total frames allocated %d \n", numPages);
+
+	uint32 baseVA = myEnv->end + PAGE_SIZE;
+	uint32 counter = 0, start_add = 0;
+
+	for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
+		if (allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address == 0) {
+			counter++;
 		} else {
-			return ptr;
+			counter = 0;
+			va = allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
+					+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].numOfPages
+							* PAGE_SIZE - PAGE_SIZE;
+		}
+
+		if (counter == numPages) {
+
+			start_add = va - (numPages - 1) * PAGE_SIZE;
+			break;
 		}
 	}
+
+	if (start_add != 0) {
+		int ret = sys_createSharedObject(sharedVarName, size, isWritable,
+				(void*) start_add);
+		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].address =
+				start_add;
+		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].numOfPages =
+				numPages;
+		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
+			return NULL;
+		}
+		return (void*) start_add;
+	}
+
+	//	void* ptr = malloc(ROUNDUP(size, PAGE_SIZE));
+	//	if (ptr != NULL) {
+	//		int ret = sys_createSharedObject(sharedVarName, size, isWritable, ptr);
+	//		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
+	//			return NULL;
+	//		} else {
+	//			return ptr;
+	//		}
+	//	}
+	//
 	return NULL;
 }
 
@@ -180,31 +183,54 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 	// Write your code here, remove the panic and write your code
 	//panic("sget() is not implemented yet...!!");
 	uint32 size = sys_getSizeOfSharedObject(ownerEnvID, sharedVarName);
-	cprintf("size = %d\n", size);
-	if (size == 0 || size == E_SHARED_MEM_NOT_EXISTS){
-		cprintf("if (size == 0 || size == E_SHARED_MEM_NOT_EXISTS)\n");
+	if (size == 0 || size == E_SHARED_MEM_NOT_EXISTS)
 		return NULL;
-	}
 
-	void* ptr = malloc(ROUNDUP(size, PAGE_SIZE));
-	if (ptr == NULL){
-		cprintf("ptr == NULL\n");
-		return NULL;
-	}
-	else {
-		uint32 id = sys_getSharedObject(ownerEnvID, sharedVarName, ptr);
-		cprintf("id = %d\n", id);
-		if (id != 0) {
-			int* int_ptr = (int*)ptr;
-			cprintf("ptr = %u and *ptr = %d\n", ptr, *int_ptr);
-			return ptr;
+	uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+//	cprintf(" the total frames allocated %d \n", numPages);
+
+	uint32 baseVA = myEnv->end + PAGE_SIZE;
+	uint32 counter = 0, start_add = 0;
+
+	for (uint32 va = baseVA; va < USER_HEAP_MAX; va += PAGE_SIZE) {
+		if (allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address == 0) {
+			counter++;
+		} else {
+			counter = 0;
+			va = allocPages[(va - USER_HEAP_START) / PAGE_SIZE].address
+					+ allocPages[(va - USER_HEAP_START) / PAGE_SIZE].numOfPages
+							* PAGE_SIZE - PAGE_SIZE;
+		}
+
+		if (counter == numPages) {
+
+			start_add = va - (numPages - 1) * PAGE_SIZE;
+			break;
 		}
 	}
 
-	cprintf("finish\n");
-	return ptr;
-}
+	if (start_add != 0) {
+		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].address =
+				start_add;
+		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].numOfPages =
+				numPages;
+		uint32 id = sys_getSharedObject(ownerEnvID, sharedVarName, (void*)start_add);
+		if (id != E_SHARED_MEM_NOT_EXISTS) {
+			return (void*)start_add;
+		}
+	}
 
+//		void* ptr = malloc(ROUNDUP(size, PAGE_SIZE));
+//		if (ptr == NULL)
+//			return NULL;
+//		else {
+//			uint32 id = sys_getSharedObject(ownerEnvID, sharedVarName, ptr);
+//			if (id != E_SHARED_MEM_NOT_EXISTS) {
+//				return ptr;
+//			}
+//		}
+	return NULL;
+}
 //==================================================================================//
 //============================== BONUS FUNCTIONS ===================================//
 //==================================================================================//
@@ -223,7 +249,10 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 void sfree(void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
 	// Write your code here, remove the panic and write your code
-	panic("sfree() is not implemented yet...!!");
+	//panic("sfree() is not implemented yet...!!");
+//	cprintf("Sfree: =====> Virtual address: %u\n", virtual_address);
+	uint32 id = (uint32) virtual_address  & 0x7FFFFFFF;
+	sys_freeSharedObject(id, virtual_address);
 }
 
 //=================================

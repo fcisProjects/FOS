@@ -191,30 +191,34 @@ void fault_handler(struct Trapframe *tf) {
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
-			uint32 PERM_MARK = 0x400;
-//			cprintf(
-//					"in the validate pointer-------------------------------------------->  \n");
 
+
+			uint32 PERM_MARK = 0x400;
+//			cprintf("in the validate pointer-------------------------------------------->  \n");
+
+//			if (fault_va==0xffffffff)
+//				return;
 			uint32 *page;
 			int y = get_page_table(faulted_env->env_page_directory, fault_va,
 					&page);
+
 //			cprintf("fault add is %p \n", fault_va);
-//
-//			//cprintf("env ID is %d \n", faulted_env->env_id);
-//			//cprintf("perm mark is %p \n", PERM_MARK);
+
+//			cprintf("env ID is %d \n", faulted_env->env_id);
+//			cprintf("perm mark is %p \n", PERM_MARK);
 //			cprintf("the anding is %d \n", page[PTX(fault_va)] & PERM_MARK);
 			if (page != NULL) {
 				uint32 entry = page[PTX(fault_va)];
 				if ((fault_va >= USER_HEAP_START && fault_va <= USER_HEAP_MAX)
 						&& (!(entry & PERM_MARK))) {		//point to user heap
-					cprintf("if bit is not marked in heap \n");
+//					cprintf("if bit is not marked in heap \n");
 					env_exit();
 				} else if ((entry & PERM_PRESENT) && (!(entry & PERM_USER))) {
-					cprintf("kearnal heap \n");
+//					cprintf("kearnal heap \n");
 					env_exit();
 				} else if ((entry & PERM_PRESENT)
 						&& (!(entry & PERM_WRITEABLE))) {
-					cprintf("read only  \n");
+//					cprintf("read only  \n");
 					env_exit();
 				}
 			}
@@ -298,14 +302,14 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 //		cprintf("in the page fault  if the wor set still valid \n");
 		int r = allocate_frame(&free_frame);
 		if (r != 0) {
-			cprintf("no cpace to allocate \n");
+//			cprintf("no cpace to allocate \n");
 			env_exit();
 		}
 		int ret = map_frame(faulted_env->env_page_directory, free_frame,
 				fault_va,
 				PERM_WRITEABLE | PERM_USER);
 		if (ret != 0) {
-			cprintf("no space to map \n");
+//			cprintf("no space to map \n");
 
 			env_exit();
 		}
@@ -316,6 +320,9 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 					|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP))) {
 //				cprintf(" not also stack or heap   \n");
 				//unmap_frame(faulted_env->env_page_directory, fault_va);
+//				cprintf("fault add casting to int  %d \n", (int)fault_va);
+//				cprintf("fault add is %p \n", fault_va);
+
 				env_exit();
 			}
 

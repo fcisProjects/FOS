@@ -8,6 +8,8 @@
 #include <inc/string.h>
 #include "../inc/dynamic_allocator.h"
 
+
+
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
@@ -65,8 +67,8 @@ void print_blocks_list(struct MemBlock_LIST list) {
 	cprintf("size of list is %d\n", LIST_SIZE(&list));
 	LIST_FOREACH(blk, &list)
 	{
-		cprintf("(size: %d, isFree: %d)\n", get_block_size(blk),
-				is_free_block(blk));
+		cprintf("(size: %d, isFree: %d) va %p\n", get_block_size(blk),
+				is_free_block(blk), (char*) blk);
 	}
 	cprintf("=========================================\n");
 
@@ -131,7 +133,6 @@ void initialize_dynamic_allocator(uint32 daStart,
 			+ 2 * sizeof(uint32));
 
 	LIST_INSERT_HEAD(&freeBlocksList, element);
-	cprintf("initialize_dynamic_allocator------------------\n");
 
 }
 //==================================
@@ -186,6 +187,7 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated) {
 //=========================================
 
 void *alloc_block_FF(uint32 size) {
+//	cprintf("in alloc block ff\n");
 	//==================================================================================
 	//DON'T CHANGE THESE LINES==========================================================
 	//==================================================================================
@@ -211,6 +213,7 @@ void *alloc_block_FF(uint32 size) {
 	//panic("alloc_block_FF is not implemented yet");
 	//Your Code is Here...
 //	cprintf("in alloc block ff\n");
+//	cprintf("size of list is %d\n", LIST_SIZE(&freeBlocksList));
 //	print_blocks_list(freeBlocksList);
 
 	struct BlockElement *element;
@@ -241,12 +244,12 @@ void *alloc_block_FF(uint32 size) {
 //	cprintf("will calll sbrk in block ff\n");
 	uint32*oldbrk = sbrk(1);
 
-	if (oldbrk == (void *)-1) {
+	if ((void *)oldbrk == (void *)-1) {
 //		cprintf("00000\n");
 		return NULL;
 	} else {
 
-		//print_blocks_list(freeBlocksList);
+//		print_blocks_list(freeBlocksList);
 
 		struct BlockElement* last_elem = LIST_LAST(&freeBlocksList);
 		uint32 prev_size = 0;
@@ -257,11 +260,12 @@ void *alloc_block_FF(uint32 size) {
 			prev_size = get_block_size(last_elem);
 			prev_alloc = is_free_block(last_elem);
 
+//			cprintf(" the header is %p  the footer is  \n",(char*)last_elem + prev_size);
+//			cprintf(" the old brk is %p  \n",(char*)oldbrk);
+
 		}
 
-
-		if (prev_alloc && ((char*)last_elem + prev_size == (char*)oldbrk)) {
-
+		if (prev_alloc && ((char*) last_elem + prev_size == (char*) oldbrk)) {
 //			cprintf("case B (merge)\n");
 			LIST_REMOVE(&freeBlocksList, last_elem);
 
@@ -269,7 +273,7 @@ void *alloc_block_FF(uint32 size) {
 			return alloc_block_FF(size);
 
 		} else {
-			cprintf("case A\n");
+//			cprintf("case A\n");
 			struct BlockElement* newblock = (struct BlockElement*) oldbrk;
 			set_block_data(newblock, PAGE_SIZE, 0);
 
@@ -358,16 +362,16 @@ void free_block(void* va) {
 	//panic("free_block is not implemented yet");
 	//Your Code is Here...
 
-	cprintf("in free block\n");
+//	cprintf("in free block the va %p\n", va);
 
 	void* prev = (char*) va - sizeof(uint32);
 	uint32 prev_size = get_block_size(prev);
 	bool prev_alloc = is_free_block(prev);
 
 	uint32 cur_size = get_block_size(va);
-	//extraaaa
+
 	uint32*oldbrk = sbrk(0);
-	//cprintf("leh next or not %p,   %p", va + cur_size, oldbrk);
+//	cprintf("leh next or not %p,   %p", va + cur_size, oldbrk);
 
 	void* next;
 	uint32 next_size;
@@ -384,8 +388,8 @@ void free_block(void* va) {
 		next_alloc = is_free_block(next);
 	}
 
-
 	if (prev_alloc && next_alloc) {
+//		cprintf("             merge                  .\n");
 		struct BlockElement *prevelement = (struct BlockElement*) ((char*) va
 				- prev_size);
 		struct BlockElement *nextelement = (struct BlockElement*) (next);
@@ -395,133 +399,181 @@ void free_block(void* va) {
 		set_block_data(prevelement, prev_size + cur_size + next_size, 0);
 
 	} else if (prev_alloc && !next_alloc) {
-		cprintf("in free block -----------------1 \n");
+//		cprintf("             prev free                  .\n");
+
 		struct BlockElement *element = (struct BlockElement*) ((char*) va
 				- prev_size);
 		LIST_REMOVE(&freeBlocksList, element);
 		set_block_data(element, prev_size + cur_size, 0);
 
 	} else if (!prev_alloc && next_alloc) {
+//		cprintf("             next free                 .\n");
 		struct BlockElement *element = (struct BlockElement*) (next);
 		LIST_REMOVE(&freeBlocksList, element);
 		set_block_data(va, next_size + cur_size, 0);
 
 	} else {
+//		cprintf("              inr else free                 .\n");
 		set_block_data(va, cur_size, 0);
 	}
+//	print_blocks_list(freeBlocksList);
 }
 
 //=========================================
 // [6] REALLOCATE BLOCK BY FIRST FIT:
 //=========================================
-void *realloc_block_FF(void* va, uint32 new_size) {
+void* realloc_block_FF(void* va, uint32 new_size) {
 	//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("realloc_block_FF is not implemented yet");
 	//Your Code is Here...
 
 	uint32 current_size = get_block_size(va);
-	if (new_size == 0 && va != (void*) NULL) {
-		free_block(va);
-		return (void *) NULL;
-	} else if (new_size == current_size && va != (void *) NULL) {
-		return va;
-	} else if (va == (void*) NULL && new_size > 0) {
-		return alloc_block_FF(new_size);
-	} else if (va == (void*) NULL && new_size == 0) {
-		struct BlockElement *element;
-		return (void *) NULL;
-	}
-
-	if (new_size % 2 != 0)
-		new_size++;
-
-	struct BlockElement *va_next = (struct BlockElement*) (va
-			+ get_block_size(va));
-
-	if (new_size + 8 > get_block_size(va)) {
-
-		int8 free_or_not = is_free_block((void *) ((va_next)));
-		if (free_or_not == 0) {
-			void *newVA = alloc_block_FF(new_size);
+		if (new_size == 0 && va != (void*) NULL) {
 			free_block(va);
-			return newVA;
-		} else {
+			return (void *) NULL;
+		} else if (new_size == current_size && va != (void *) NULL) {
+			return va;
+		} else if (va == (void*) NULL && new_size > 0) {
+			return alloc_block_FF(new_size);
+		} else if (va == (void*) NULL && new_size == 0) {
+			struct BlockElement *element;
+			return (void *) NULL;
+		}
 
-			if (get_block_size((va_next))
-					< ((new_size + 8) - get_block_size(va))) {
+		if (new_size % 2 != 0)
+			new_size++;
 
-				struct BlockElement *element;
-				void *newVA = alloc_block_FF(new_size);
-				free_block(va);
+		struct BlockElement *va_next = (struct BlockElement*) (va
+				+ get_block_size(va));
 
-				return newVA;
+		if (new_size + 8 > get_block_size(va)) {
 
-			} else if (get_block_size((void *) (va_next))
-					- ((new_size + 8) - get_block_size(va)) < 16) {
+			int8 free = is_free_block((void *) ((va_next)));
+			if (free == 0) {
+				//void *newVA = alloc_block_FF(new_size);
+				//memcpy(newVA, va, current_size - 8);
 
-				set_block_data(va, new_size + 8, 1);
-				LIST_REMOVE(&freeBlocksList, va_next);
+				//free_block(va);
 
 				return va;
+
+			} else {
+
+				if (get_block_size((va_next))
+						< ((new_size + 8) - get_block_size(va))) {
+
+					struct BlockElement *element;
+					void *newVA = alloc_block_FF(new_size);
+
+					memcpy(newVA, va, current_size - 8);
+
+					free_block(va);
+
+					return newVA;
+
+				} else if (get_block_size((va_next))
+						- ((new_size + 8) - get_block_size(va)) < 16) {
+
+					set_block_data(va, new_size + 8, 1);
+					LIST_REMOVE(&freeBlocksList, va_next);
+
+					return va;
+				}
+
+				else
+
+				{
+					void * nextVA = (void *) ((uint32) va + (get_block_size(va)));
+
+					uint32 size_of_next_block = get_block_size(nextVA);
+
+					uint32 oldsize = get_block_size(va);
+
+					struct BlockElement * old_block =
+							(struct BlockElement *) (uint8*) va;
+
+					LIST_REMOVE(&freeBlocksList, va_next);
+//					print_blocks_list(freeBlocksList);
+					set_block_data(va, new_size + 8, 1);
+
+					nextVA = (void *) ((uint32) va + new_size + 8);
+
+					set_block_data(nextVA,
+							((size_of_next_block + oldsize) - (new_size + 8)), 0);
+
+					//print_blocks_list(freeBlocksList);
+
+					return va;
+				}
 			}
 
-			else
+		} else {
+			uint32 size_of_block = get_block_size(va);
+			uint32 size_of_new_block = new_size + 8;
+			struct BlockElement *header_next3 = (struct BlockElement*) ((uint8 *) va
+					+ size_of_new_block);
 
-			{
-				void * nextVA = (void *) ((uint32) va + (get_block_size(va)));
-
-				uint32 size_of_next_block = get_block_size(nextVA);
-
-				uint32 oldsize = get_block_size(va);
+			if (size_of_block - size_of_new_block >= 16) {
 
 				struct BlockElement * old_block =
-						(struct BlockElement *) (uint8*) va;
+						(struct BlockElement *) ((uint8*) va);
 
-				LIST_REMOVE(&freeBlocksList, va_next);
-				print_blocks_list(freeBlocksList);
-				set_block_data(va, new_size + 8, 1);
+				set_block_data(va, size_of_new_block, 1);
+				struct BlockElement* nextFreeBlock;
+				bool flag=0;
+				uint32 sizeOfNextFreeBlock;
+				LIST_FOREACH(nextFreeBlock,&freeBlocksList){
 
-				nextVA = (void *) ((uint32) va + new_size + 8);
+					if((uint32)(nextFreeBlock) == (uint32)va + size_of_block){
+						flag=1;
+						sizeOfNextFreeBlock = get_block_size(nextFreeBlock);
+						LIST_REMOVE(&freeBlocksList,nextFreeBlock);
+						break;
+					}
+				}
 
-				set_block_data(nextVA,
-						((size_of_next_block + oldsize) - (new_size + 8)), 0);
+				if(flag == 1){
+					set_block_data(va + new_size + 8,(size_of_block - size_of_new_block) + sizeOfNextFreeBlock, 0);
 
-				print_blocks_list(freeBlocksList);
+				}
+				else{
+					set_block_data(va + new_size + 8, size_of_block - new_size - 8, 0);
+				}
 
 				return va;
+
+			} else {
+
+				struct BlockElement *header_next4 =
+						(struct BlockElement*) (uint8 *) va + new_size + 8;
+
+				struct BlockElement* nextFreeBlock;
+				bool flag = 0;
+				uint32 sizeOfNextFreeBlock;
+				LIST_FOREACH(nextFreeBlock,&freeBlocksList)
+				{
+
+					if ((uint32) (nextFreeBlock) == (uint32) va + size_of_block) {
+						flag = 1;
+						sizeOfNextFreeBlock = get_block_size(nextFreeBlock);
+						LIST_REMOVE(&freeBlocksList, nextFreeBlock);
+						break;
+					}
+				}
+
+				if (flag == 1) {
+					set_block_data(va, new_size + 8, 1);
+					cprintf("in coalesce/n");
+					set_block_data(va + new_size + 8, (size_of_block - new_size + 8) + sizeOfNextFreeBlock, 0);
+				}
+
+				return va;
+
 			}
-		}
-
-	} else {
-		uint32 size_of_block = get_block_size(va);
-		uint32 size_of_new_block = new_size + 8;
-		struct BlockElement *header_next3 = (struct BlockElement*) ((uint8 *) va
-				+ size_of_new_block);
-
-		if (size_of_block - size_of_new_block >= 16) {
-
-			struct BlockElement * old_block =
-					(struct BlockElement *) ((uint8*) va);
-
-			set_block_data(va, size_of_new_block, 1);
-			set_block_data(header_next3, size_of_block - size_of_new_block, 0);
-
-			return va;
-		} else {
-
-			struct BlockElement *header_next4 =
-					(struct BlockElement*) (uint8 *) va;
-
-			set_block_data(va, get_block_size(va), 1);
-
-			return va;
-
+			return (void *) NULL;
 		}
 		return (void *) NULL;
-	}
-	return (void *) NULL;
-
 }
 
 /*********************************************************************************************/

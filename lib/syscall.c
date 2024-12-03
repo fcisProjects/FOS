@@ -300,7 +300,9 @@ void* sys_sbrk(int increment)
 {
 	//Comment the following line before start coding...
 	//panic("not implemented yet");
-	return (void*)syscall(SYS_sbrk,(uint32)increment,0,0,0,0);
+	uint32 * x= (uint32 *)syscall(SYS_sbrk,(uint32)increment,0,0,0,0);
+//	cprintf("\n the retern in sys sbrk user side %x\n",x);
+	return (void*)x;
 }
 
 void sys_free_user_mem(uint32 virtual_address, uint32 size)

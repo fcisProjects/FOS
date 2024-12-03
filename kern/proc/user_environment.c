@@ -924,6 +924,8 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart,
 	e->start=daStart;
 	e->end=daLimit;
 	e->brk=daStart;
+//	cprintf("LIMITTT %p\n",e->end);
+
 
 		initialize_dynamic_allocator(daStart,0);
 }

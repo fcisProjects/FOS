@@ -324,7 +324,7 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
-	cprintf("in sys_allocate_user_mem \n");
+//	cprintf("in sys_allocate_user_mem \n");
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
 	if (virtual_address == (uint32) NULL || virtual_address == 0) {
 		env_exit();
@@ -334,7 +334,7 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	} else if (size + virtual_address > USER_HEAP_MAX) {
 		env_exit();
 	}
-	cprintf("will call allocate_user_mem \n");
+//	cprintf("will call allocate_user_mem \n");
 	allocate_user_mem(cur_env, virtual_address, size);
 	return;
 }
@@ -466,7 +466,7 @@ static void sys_exit_env()
 int sys_create_env(char* programName, unsigned int page_WS_size,unsigned int LRU_second_list_size, unsigned int percent_WS_pages_to_remove)
 {
 	//cprintf("\nAttempt to create a new env\n");
-	cprintf("\n in createeeeee\n");
+//	cprintf("\n in createeeeee\n");
 	struct Env* env =  env_create(programName, page_WS_size, LRU_second_list_size, percent_WS_pages_to_remove);
 	if(env == NULL)
 	{
@@ -523,12 +523,15 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	//cprintf("syscallno = %d\n", syscallno);
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
+	uint32 * x;
 	switch(syscallno)
 	{
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
 
 	case SYS_sbrk:
-			return (uint32)sys_sbrk((int)a1);
+			 x=(uint32 *)sys_sbrk((int)a1);
+//			cprintf("in syscall kernal side %x \n",x);
+			return (uint32)x;
 		    break;
 	case SYS_free_user_mem:
 			sys_free_user_mem(a1,a2);

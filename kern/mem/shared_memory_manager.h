@@ -39,6 +39,7 @@ struct Share
 //List of all shared objects
 LIST_HEAD(Share_List, Share);		// Declares 'struct Share_List'
 
+
 #if USE_KHEAP == 0
 	//max number of shared objects
 	#define MAX_SHARES 100
@@ -57,6 +58,10 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 int getSizeOfSharedObject(int32 ownerID, char* shareName);
 int getSharedObject(int32 ownerID, char* shareName, void* virtual_address);
 int freeSharedObject(int32 sharedObjectID, void *startVA);
+
+
+uint8 if_PageTable_Empty(uint32* page_table);
+/*void* GET_OWNER_VA(int32 ownerID);*/
 
 
 #endif /* FOS_SHARED_MEMORY_MANAGER_H */

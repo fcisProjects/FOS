@@ -49,6 +49,4 @@ uint32 start,brk,end;
 
 
 
-
-
 #endif // FOS_KERN_KHEAP_H_
