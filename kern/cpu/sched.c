@@ -249,7 +249,7 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//TODO: [PROJECT'24.MS3 - #07] [3] PRIORITY RR Scheduler - sched_init_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
 
 
 
@@ -364,7 +364,16 @@ void clock_interrupt_handler(struct Trapframe* tf)
 		//TODO: [PROJECT'24.MS3 - #09] [3] PRIORITY RR Scheduler - clock_interrupt_handler
 		//Your code is here
 		//Comment the following line
-		panic("Not implemented yet");
+		//panic("Not implemented yet");
+		if(quantums >= myEnv->threshold)
+		{
+			sched_remove_ready(myEnv);
+			if(myEnv->priority>0)
+			{
+			   myEnv.priority--;
+			   sched_insert_ready(myEnv);
+			}
+		}
 	}
 
 
