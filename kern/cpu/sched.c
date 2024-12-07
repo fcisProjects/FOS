@@ -251,14 +251,18 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//Comment the following line
 	//panic("Not implemented yet");
 
+	quantums[0] = quantum;
 
 
+	sched_set_starv_thresh(starvThresh);
 
-
-
-
-
-
+	num_of_ready_queues = numOfPriorities;
+	ProcessQueues.env_ready_queues = kmalloc(sizeof(struct Env_Queue) * numOfPriorities);
+	for (int i = 0; i < (int) numOfPriorities; i++){
+		cprintf("made queue %d",i);
+		init_queue(&(ProcessQueues.env_ready_queues[i]));
+	}
+	cprintf("quantum: %d starvThresh: %d number of priorties: %d",quantums[0],starvThresh,numOfPriorities);
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	uint16 cnt0 = kclock_read_cnt0_latch() ; //read after write to ensure it's set to the desired value
@@ -350,7 +354,24 @@ struct Env* fos_scheduler_PRIRR()
 	//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+
+	struct Env* oldEnv = get_cpu_proc();
+	oldEnv->env_status = ENV_READY;
+	sched_insert_ready(oldEnv);
+
+	struct Env* newEnv;
+	for(int i = 0; i < num_of_ready_queues; i++){
+		 if(queue_size(&(ProcessQueues.env_ready_queues[i]))>0){
+			 newEnv = dequeue(&(ProcessQueues.env_ready_queues[i]));
+			 newEnv->env_status = ENV_RUNNING;
+			 kclock_set_quantum(quantums[0]);
+			 return newEnv;
+		 }
+	}
+
+
+	return NULL;
 }
 
 //========================================

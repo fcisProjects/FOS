@@ -710,11 +710,12 @@ void env_set_priority(int envID, int priority)
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
-if(proc->env_status==ENV_READY)
-{
-	sched_remove_ready(proc);
-}
-	proc->priority=priority;
+
+	if (proc->env_status == ENV_READY) {
+		sched_remove_ready(proc);
+	}
+
+	proc->priority = priority;
 	sched_insert_ready(proc);
 }
 
@@ -725,5 +726,6 @@ void sched_set_starv_thresh(uint32 starvThresh)
 	//Comment the following line
 	//panic("Not implemented yet");
 	myEnv->threshold=starvThresh;
-return;
+
+	return;
 }
