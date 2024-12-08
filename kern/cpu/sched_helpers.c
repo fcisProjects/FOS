@@ -712,11 +712,16 @@ void env_set_priority(int envID, int priority)
 	//panic("Not implemented yet");
 
 	if (proc->env_status == ENV_READY) {
+		acquire_spinlock(&ProcessQueues.qlock);
 		sched_remove_ready(proc);
+		release_spinlock(&ProcessQueues.qlock);
 	}
-
+	proc->count = 0;
 	proc->priority = priority;
+	acquire_spinlock(&ProcessQueues.qlock);
 	sched_insert_ready(proc);
+	release_spinlock(&ProcessQueues.qlock);
+
 }
 
 void sched_set_starv_thresh(uint32 starvThresh)
@@ -725,7 +730,7 @@ void sched_set_starv_thresh(uint32 starvThresh)
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
-	myEnv->threshold=starvThresh;
+	threshold=starvThresh;
 
 	return;
 }

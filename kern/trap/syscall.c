@@ -347,6 +347,13 @@ void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms)
 	return;
 }
 
+// mike
+void sys_env_set_priority(int envID, int priority)
+{
+	env_set_priority(envID,priority);
+	return;
+}
+
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
 {

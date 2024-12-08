@@ -348,29 +348,36 @@ struct Env* fos_scheduler_BSD()
 struct Env* fos_scheduler_PRIRR()
 {
 	/*To protect process Qs (or info of current process) in multi-CPU************************/
-	if(!holding_spinlock(&ProcessQueues.qlock))
-		panic("fos_scheduler_PRIRR: q.lock is not held by this CPU while it's expected to be.");
+	if (!holding_spinlock(&ProcessQueues.qlock))
+		panic(
+				"fos_scheduler_PRIRR: q.lock is not held by this CPU while it's expected to be.");
 	/****************************************************************************************/
-	//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
-	//Your code is here
-	//Comment the following line
-	//panic("Not implemented yet");
-
+//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
+//Your code is here
+//Comment the following line
+//panic("Not implemented yet");
 	struct Env* oldEnv = get_cpu_proc();
-	oldEnv->env_status = ENV_READY;
-	sched_insert_ready(oldEnv);
+	//acquire_spinlock(&ProcessQueues.qlock);
+	if (oldEnv != NULL)
+	{
 
-	struct Env* newEnv;
-	for(int i = 0; i < num_of_ready_queues; i++){
-		 if(queue_size(&(ProcessQueues.env_ready_queues[i]))>0){
-			 newEnv = dequeue(&(ProcessQueues.env_ready_queues[i]));
-			 newEnv->env_status = ENV_RUNNING;
-			 kclock_set_quantum(quantums[0]);
-			 return newEnv;
-		 }
+		sched_insert_ready(oldEnv);
+
 	}
 
+	struct Env* newEnv;
+	for (int i = 0; i < num_of_ready_queues; i++)
+	{
+		if (queue_size(&(ProcessQueues.env_ready_queues[i])) > 0)
+		{
 
+			newEnv = dequeue(&(ProcessQueues.env_ready_queues[i]));
+
+			kclock_set_quantum(quantums[0]);
+			return newEnv;
+		}
+	}
+	//release_spinlock(&ProcessQueues.qlock);
 	return NULL;
 }
 
@@ -386,15 +393,33 @@ void clock_interrupt_handler(struct Trapframe* tf)
 		//Your code is here
 		//Comment the following line
 		//panic("Not implemented yet");
-		if(quantums >= myEnv->threshold)
+		struct Env* env;
+		acquire_spinlock(&ProcessQueues.qlock);
+		for (int i = 0; i < num_of_ready_queues; i++)
 		{
-			sched_remove_ready(myEnv);
-			if(myEnv->priority>0)
+			int size = queue_size(&ProcessQueues.env_ready_queues[i]);
+			for (int j = 0; j < size; j++)
 			{
-			   myEnv.priority--;
-			   sched_insert_ready(myEnv);
+
+				env = dequeue(&(ProcessQueues.env_ready_queues[i]));
+				env->count++;
+				enqueue(&ProcessQueues.env_ready_queues[i], env);
+
+				if (env->count >= threshold)
+				{
+					if (env->priority > 0)
+					{
+						sched_remove_ready(env);
+						env->priority--;
+						env->count = 0;
+						sched_insert_ready(env);
+					}
+				}
 			}
+
 		}
+
+		release_spinlock(&ProcessQueues.qlock);
 	}
 
 

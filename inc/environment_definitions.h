@@ -110,7 +110,7 @@ struct Env {
 	void* channel;	// Address of the channel that it's blocked (sleep) on it
 
 //mike
-	int threshold;
+	int count;
 	//================
 	/*ADDRESS SPACE*/
 	//================

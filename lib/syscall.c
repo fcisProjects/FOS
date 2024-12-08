@@ -320,7 +320,7 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 }
 
 //mike
-sys_env_set_priority(int envID, int priority)
+ void sys_env_set_priority(int envID, int priority)
 {
 	syscall(SYS_env_set_priority,envID,priority,0,0,0);
 }
