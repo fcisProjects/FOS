@@ -318,4 +318,13 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	//panic("not implemented yet");
 	syscall(SYS_allocate_user_mem,virtual_address,size,0,0,0);
 }
-
+void sys_enqueue(uint32 queue_add){
+	syscall(SYS_enqueue,queue_add,0,0,0,0);
+}
+void* sys_dequeue(uint32 queue_add){
+	struct Env* x = (struct Env*) syscall(SYS_dequeue,queue_add,0,0,0,0);
+	return (void*)x;
+}
+void sys_init_queue(uint32 queue_add){
+	syscall(SYS_init_Queue,queue_add,0,0,0,0);
+}

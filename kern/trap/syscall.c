@@ -346,7 +346,32 @@ void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms)
 	allocate_chunk(cur_env->env_page_directory, virtual_address, size, perms);
 	return;
 }
+void sys_enqueue(uint32 queue_addr) {
+    cprintf("In sys call of enqueue\n");
 
+    // Decode the integer back to a pointer
+    struct Env_Queue* queue = (struct Env_Queue*)queue_addr;
+
+    enqueue(queue, cur_env);
+    return;
+}
+void* sys_dequeue(uint32 queue_addr) {
+    cprintf("In sys call of dequeue\n");
+
+    // Decode the integer back to a pointer
+    struct Env_Queue* queue = (struct Env_Queue*)queue_addr;
+
+    return (void*)dequeue(queue);
+}
+void sys_init_queue(uint32 queue_addr){
+	cprintf("In sys call of init queue\n");
+
+	// Decode the integer back to a pointer
+	struct Env_Queue* queue = (struct Env_Queue*) queue_addr;
+
+	init_queue(queue);
+	return;
+}
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
 {
@@ -524,6 +549,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	uint32 * x;
+	uint32 * env;
 	switch(syscallno)
 	{
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
@@ -541,7 +567,14 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 			sys_allocate_user_mem(a1,a2);
 			return 0;
 			break;
-
+	case SYS_enqueue:
+		sys_enqueue(a1);
+		return 0;
+		break;
+	case SYS_dequeue:
+		env = (uint32 *)sys_dequeue(a1);
+		return (uint32)env;
+		break;
 	//======================================================================
 	case SYS_cputs:
 		sys_cputs((const char*)a1,a2,(uint8)a3);
