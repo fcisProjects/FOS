@@ -79,6 +79,13 @@ uint32 	sys_isUHeapPlacementStrategyBESTFIT();
 uint32 	sys_isUHeapPlacementStrategyNEXTFIT();
 uint32 	sys_isUHeapPlacementStrategyWORSTFIT();
 void 	sys_set_uheap_strategy(uint32 heapStrategy);
+void 	sys_init_queue(uint32 queue);
+void 	sys_enqueue(uint32 queue);
+void	sys_dequeue(uint32 queue);
+void 	sys_sched_insert_ready(uint32 env);
+void 	sys_pushcli();
+void 	sys_popcli();
+void 	sys_sched_remove_ready(uint32 env);
 
 //Page File
 int 	sys_pf_calculate_allocated_pages(void);

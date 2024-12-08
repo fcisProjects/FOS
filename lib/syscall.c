@@ -294,6 +294,40 @@ void sys_utilities(char* utilityName, int value)
 	return;
 }
 
+void sys_init_queue(uint32 queue){
+	syscall(SYS_init_queue, (uint32)queue, 0, 0, 0, 0);
+	return;
+}
+
+void sys_enqueue(uint32 queue){
+	syscall(SYS_enqueue, (uint32)queue, 0, 0, 0, 0);
+	return;
+}
+
+void sys_dequeue(uint32 queue){
+	syscall(SYS_dequeue, (uint32)queue, 0, 0, 0, 0);
+	return;
+}
+
+void sys_sched_insert_ready(uint32 env){
+	syscall(SYS_Sched_Insert_Ready, (uint32)env, 0, 0, 0, 0);
+	return;
+}
+
+void sys_pushcli(){
+	syscall(SYS_pushcli, 0, 0, 0, 0, 0);
+	return;
+}
+
+void sys_popcli(){
+	syscall(SYS_popcli, 0, 0, 0, 0, 0);
+	return;
+}
+
+void sys_sched_remove_ready(uint32 env){
+	syscall( SYS_sched_remove_read,env, 0,0,0,0);
+	return;
+}
 
 //TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Implement these system calls
 void* sys_sbrk(int increment)

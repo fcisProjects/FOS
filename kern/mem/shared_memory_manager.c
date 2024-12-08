@@ -185,6 +185,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 	struct Env* myenv = get_cpu_proc(); //The calling environment
 	struct Share* existingShare = get_share(ownerID, shareName);
 	if (existingShare != NULL) {
+		cprintf("exsits\n");
 		return E_SHARED_MEM_EXISTS;
 	}
 

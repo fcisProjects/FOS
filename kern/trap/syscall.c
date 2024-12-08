@@ -347,6 +347,51 @@ void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms)
 	return;
 }
 
+void sys_init_queue(uint32 queue){
+	struct Env_Queue* q = (struct Env_Queue*)queue;
+	cprintf("Initializing queue at addr: %x\n", queue);
+	init_queue(q);
+	cprintf("Queue initialized. Head: %x, Tail: %x, Size: %d\n", q->lh_first, q->lh_last, q->size);
+}
+
+void sys_enqueue(uint32 queue){
+	 struct Env_Queue* q = (struct Env_Queue*)queue;
+	struct Env* env = get_cpu_proc();
+	cprintf("Enqueuing env ID: %d into queue addr: %x\n", env->env_id, queue);
+	enqueue(q, env);
+	cprintf("Enqueue complete. Queue size: %d\n", q->size);
+}
+
+void sys_dequeue(uint32 queue){
+	struct Env_Queue* q = (struct Env_Queue*)queue;
+	cprintf("Dequeuing from queue addr: %x\n", queue);
+	struct Env* env = dequeue(q);
+	if (env != NULL) {
+		cprintf("Dequeued env ID: %d\n", env->env_id);
+	} else {
+		cprintf("Dequeue failed. Queue is empty.\n");
+	}
+}
+
+void sys_sched_insert_ready(uint32 env){
+	struct Env* e = (struct Env*)env;
+	cprintf("Inserting env ID: %d into ready queue\n", e->env_id);
+	sched_insert_ready(e);
+	cprintf("Environment inserted into ready queue\n");
+}
+
+void sys_pushcli(){
+	pushcli();
+}
+
+void sys_popcli(){
+	popcli();
+}
+
+void sys_sched_remove_ready(uint32 env){
+	struct Env* e = get_cpu_proc();
+	sched_remove_ready(e);
+}
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
 {
@@ -541,7 +586,30 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 			sys_allocate_user_mem(a1,a2);
 			return 0;
 			break;
-
+	case SYS_init_queue:
+		sys_init_queue(a1);
+		return 0;
+		break;
+	case SYS_enqueue:
+		sys_enqueue(a1);
+		return 0;
+		break;
+	case SYS_dequeue:
+		sys_dequeue(a1);
+		return 0;
+		break;
+	case SYS_pushcli:
+		sys_pushcli();
+		return 0;
+		break;
+	case SYS_popcli:
+		sys_popcli();
+		return 0;
+		break;
+	case SYS_sched_remove_read:
+		sys_sched_remove_ready(a1);
+		return 0;
+		break;
 	//======================================================================
 	case SYS_cputs:
 		sys_cputs((const char*)a1,a2,(uint8)a3);
