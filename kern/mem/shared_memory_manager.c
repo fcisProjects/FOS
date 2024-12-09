@@ -185,12 +185,13 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 	struct Env* myenv = get_cpu_proc(); //The calling environment
 	struct Share* existingShare = get_share(ownerID, shareName);
 	if (existingShare != NULL) {
-		cprintf("exsits\n");
+		cprintf("E_SHARED_MEM_EXISTS\n");
 		return E_SHARED_MEM_EXISTS;
 	}
 
 	struct Share* newShare = create_share(ownerID, shareName, size, isWritable);
 	if (newShare == NULL) {
+		cprintf("E_NO_SHARE\n");
 		return E_NO_SHARE;
 	}
 
@@ -205,8 +206,8 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 //			numOfFrames);
 
 	newShare->size = numOfFrames * PAGE_SIZE;
-	//cprintf(" the total frames  allocated in create in kernel  %d \n",
-	//ROUNDUP(newShare->size , PAGE_SIZE) / PAGE_SIZE);
+	cprintf(" the total frames  allocated in create in kernel  %d \n",
+	ROUNDUP(newShare->size , PAGE_SIZE) / PAGE_SIZE);
 
 	for (uint32 i = 0; i < numOfFrames; i++) {
 
@@ -238,6 +239,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size,
 	}
 	LIST_INSERT_TAIL(&AllShares.shares_list, newShare);
 
+	cprintf("object created at %u\n", *newShare);
 	return newShare->ID;
 }
 

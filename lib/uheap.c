@@ -160,6 +160,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
 			return NULL;
 		}
+		cprintf("(return of smalloc) object created at %u\n", start_add);
 		return (void*) start_add;
 	}
 

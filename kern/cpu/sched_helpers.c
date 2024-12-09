@@ -169,6 +169,7 @@ void sched_remove_ready(struct Env* env)
 		panic("sched: q.lock is not held by this CPU while it's expected to be.");
 	/*********************************************************************/
 
+	cprintf("env id: %d , env status: %d\n", env->env_id, env->env_status);
 	assert(env != NULL && env->env_status == ENV_READY);
 	{
 		for (int i = 0 ; i < num_of_ready_queues ; i++)

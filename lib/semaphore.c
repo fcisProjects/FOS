@@ -34,8 +34,11 @@ struct semaphore create_semaphore(char *semaphoreName, uint32 value) {
 	cprintf("sem address: %x\n", (uint32)sem);
 
 	cprintf("sizeof(struct __semdata) = %u\n", sizeof(struct __semdata));
-	sem->semdata = (struct __semdata*) smalloc(semaphoreName,
+	struct __semdata* sd = (struct __semdata*) smalloc(semaphoreName,
 				sizeof(struct __semdata), 0);
+	cprintf("exits smalloc\n");
+	sem->semdata = sd;
+	cprintf("sem->semdata = sd\n");
 	if (sem->semdata == NULL) {
 		panic("Failed to allocate memory for semaphore data!");
 	}
@@ -81,16 +84,32 @@ void wait_semaphore(struct semaphore sem) {
 	cprintf("-----------------------------------wait_semaphore-------------------------------------------------");
 	cprintf("Entering wait_semaphore\n");
 	cprintf("Environment %d: Semaphore count before wait: %d\n", sys_getenvid(), sem.semdata->count);
-	sys_pushcli();
-	uint32 keyw = 1;
-	do{
-		xchg(&keyw, sem.semdata->lock);
-	}while(keyw != 0);
+	cprintf("Semaphore name: %s\n", sem.semdata->name);
+	cprintf("lock = %d\n", sem.semdata->lock);
+	//sys_pushcli();
+	while (xchg(&(sem.semdata->lock), 1)) {
+	    // Spin-wait until the lock is free
+	}
 
 	cprintf("Lock acquired. Current count: %d\n", sem.semdata->count);
+	cprintf("lock = %d\n", sem.semdata->lock);
 	sem.semdata->count--;
 	cprintf("Semaphore count after decrement: %d\n", sem.semdata->count);
 	if (sem.semdata->count < 0) {
+
+		cprintf("Environment enqueued. Removing...\n");
+		cprintf("Environment %d blocked and enqueued.\n", myEnv->env_id);
+
+		/*myEnv->env_status = ENV_BLOCKED;
+		cprintf("changing status\n");*/
+		uint32 e = (uint32) &myEnv;
+		cprintf("passing env to sched remove ready\n");
+		sys_sched_remove_ready(e);
+		cprintf("Removed.\n");
+
+		cprintf("Lock state before: %d\n", sem.semdata->lock);
+		sem.semdata->lock = 0;
+		cprintf("Lock state after: %d\n", sem.semdata->lock);
 
 		// Pass the queue address as an integer
 		uint32 queue_addr = (uint32) &(sem.semdata->queue);
@@ -98,13 +117,6 @@ void wait_semaphore(struct semaphore sem) {
 		sys_enqueue(queue_addr);
 		//enqueue(&sem.semdata->queue, myEnv);
 
-		sem.semdata->lock = 0;
-
-		cprintf("Environment enqueued. Removing...\n");
-		cprintf("Environment %d blocked and enqueued.\n", myEnv->env_id);
-		uint32 e = (uint32) &myEnv;
-		sys_sched_remove_ready(e);
-		cprintf("Removed.\n");
 	}
 
 	sem.semdata->lock = 0;
@@ -123,24 +135,24 @@ void signal_semaphore(struct semaphore sem) {
 	cprintf("-----------------------------------signal_semaphore-------------------------------------------------\n");
 	cprintf("Entering signal_semaphore for semaphore: %s\n", sem.semdata->name);
 
-	uint32 keyw = 1;
-	do{
-		xchg(&keyw, sem.semdata->lock);
-	}while(keyw != 0);
+	while(xchg(&sem.semdata->lock, 1) != 0) ;
 
 	sem.semdata->count++;
 	cprintf("Semaphore count incremented: %d\n", sem.semdata->count);
-	if (sem.semdata->count < 0) {
+	if (sem.semdata->count <= 0) {
 		uint32 queue_addr = (uint32) &(sem.semdata->queue);
-		sys_dequeue(queue_addr);
-		//denqueue(&sem.semdata->queue, myEnv);
-		uint32 e = (uint32) myEnv;
-		cprintf("Dequeued env: %d. Making it ready...\n", e);
-		sys_sched_insert_ready(e);
+		struct Env* env = (struct Env*) sys_dequeue(queue_addr);
+
+		// If an environment was dequeued, add it back to the ready queue
+		if (env != 0) {
+			sys_sched_insert_ready((uint32) &env);
+			myEnv->env_status=ENV_READY;
+			cprintf("process added \n");
+		}
 	}
 
 	sem.semdata->lock = 0;	//release
-	sys_popcli();
+	//sys_popcli();
 	cprintf("Exiting signal_semaphore\n");
 }
 

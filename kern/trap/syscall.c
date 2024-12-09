@@ -362,15 +362,12 @@ void sys_enqueue(uint32 queue){
 	cprintf("Enqueue complete. Queue size: %d\n", q->size);
 }
 
-void sys_dequeue(uint32 queue){
+uint32 sys_dequeue(uint32 queue){
 	struct Env_Queue* q = (struct Env_Queue*)queue;
 	cprintf("Dequeuing from queue addr: %x\n", queue);
 	struct Env* env = dequeue(q);
-	if (env != NULL) {
-		cprintf("Dequeued env ID: %d\n", env->env_id);
-	} else {
-		cprintf("Dequeue failed. Queue is empty.\n");
-	}
+	uint32 en = (uint32)&env;
+	return en;
 }
 
 void sys_sched_insert_ready(uint32 env){
@@ -389,8 +386,24 @@ void sys_popcli(){
 }
 
 void sys_sched_remove_ready(uint32 env){
-	struct Env* e = get_cpu_proc();
+	cprintf("sys_sched_remove_ready: Called with env address: %x\n", env);
+	struct Env* e = (struct Env*) env;
+	cprintf("changing status\n");
+	e->env_status = ENV_READY;
+	cprintf("sys_sched_remove_ready: Env details - id: %d, status: %d\n", e->env_id, e->env_status);
+
+	acquire_spinlock(&ProcessQueues.qlock);
+	cprintf("sys_sched_remove_ready: Spinlock acquired.\n");
+
 	sched_remove_ready(e);
+	cprintf("sys_sched_remove_ready: Removed env from ready queue.\n");
+	e->env_status = ENV_BLOCKED;
+	release_spinlock(&ProcessQueues.qlock);
+	cprintf("sys_sched_remove_ready: Spinlock released.\n");
+
+	/*popcli();
+	fos_scheduler();
+	pushcli();*/
 }
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
@@ -595,8 +608,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 		return 0;
 		break;
 	case SYS_dequeue:
-		sys_dequeue(a1);
-		return 0;
+		return sys_dequeue(a1);
 		break;
 	case SYS_pushcli:
 		sys_pushcli();

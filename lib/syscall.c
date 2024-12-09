@@ -304,9 +304,8 @@ void sys_enqueue(uint32 queue){
 	return;
 }
 
-void sys_dequeue(uint32 queue){
-	syscall(SYS_dequeue, (uint32)queue, 0, 0, 0, 0);
-	return;
+uint32 sys_dequeue(uint32 queue){
+	return syscall(SYS_dequeue, (uint32)queue, 0, 0, 0, 0);
 }
 
 void sys_sched_insert_ready(uint32 env){
