@@ -541,6 +541,7 @@ int loadtime_map_frame(uint32 *ptr_page_directory, struct FrameInfo *ptr_frame_i
 // calculate_available_frames:
 struct freeFramesCounters calculate_available_frames()
 {
+//	cprintf("hagora  tammmmmammmmm\n");
 	struct FrameInfo *ptr;
 	uint32 totalFreeUnBuffered = 0 ;
 	uint32 totalFreeBuffered = 0 ;
@@ -552,15 +553,17 @@ struct freeFramesCounters calculate_available_frames()
 	}
 	{
 		//calculate the free frames from the free frame list
-
+//		cprintf("hagora  tammmmmammmmm  1\n");
+//		cprintf("the sizeee %d\n",LIST_SIZE(&MemFrameLists.free_frame_list));
 		LIST_FOREACH(ptr, &MemFrameLists.free_frame_list)
 		{
 			if (ptr->isBuffered)
 				totalFreeBuffered++ ;
 			else
 				totalFreeUnBuffered++ ;
-		}
 
+		}
+//		cprintf("hagora  tammmmmammmmm   2\n");
 		/*2023: UPDATE based on suggestion from T112 2023.Term1*/
 		totalModified= LIST_SIZE(&MemFrameLists.modified_frame_list);
 		//	LIST_FOREACH(ptr, &modified_frame_list)
@@ -572,10 +575,14 @@ struct freeFramesCounters calculate_available_frames()
 	{
 		release_spinlock(&MemFrameLists.mfllock);
 	}
+//	cprintf("hagora  tammmmmammmmm   3\n");
 	struct freeFramesCounters counters ;
 	counters.freeBuffered = totalFreeBuffered ;
 	counters.freeNotBuffered = totalFreeUnBuffered ;
 	counters.modified = totalModified;
+
+
+//	cprintf("anan tammmmmammmmm\n");
 	return counters;
 }
 

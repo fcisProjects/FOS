@@ -347,64 +347,37 @@ void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms)
 	return;
 }
 
-void sys_init_queue(uint32 queue){
-	struct Env_Queue* q = (struct Env_Queue*)queue;
-	cprintf("Initializing queue at addr: %x\n", queue);
-	init_queue(q);
-	cprintf("Queue initialized. Head: %x, Tail: %x, Size: %d\n", q->lh_first, q->lh_last, q->size);
+void sys_init_queue(struct Env_Queue* queue){
+	init_queue(queue);
 }
 
-void sys_enqueue(uint32 queue){
-	 struct Env_Queue* q = (struct Env_Queue*)queue;
+void sys_Block_and_enqueue(struct semaphore* sem)
+{
+	cprintf("-------Block_and_enqueue for %s\n", sem->semdata->name);
 	struct Env* env = get_cpu_proc();
-	cprintf("Enqueuing env ID: %d into queue addr: %x\n", env->env_id, queue);
-	enqueue(q, env);
-	cprintf("Enqueue complete. Queue size: %d\n", q->size);
-}
-
-uint32 sys_dequeue(uint32 queue){
-	struct Env_Queue* q = (struct Env_Queue*)queue;
-	cprintf("Dequeuing from queue addr: %x\n", queue);
-	struct Env* env = dequeue(q);
-	uint32 en = (uint32)&env;
-	return en;
-}
-
-void sys_sched_insert_ready(uint32 env){
-	struct Env* e = (struct Env*)env;
-	cprintf("Inserting env ID: %d into ready queue\n", e->env_id);
-	sched_insert_ready(e);
-	cprintf("Environment inserted into ready queue\n");
-}
-
-void sys_pushcli(){
-	pushcli();
-}
-
-void sys_popcli(){
-	popcli();
-}
-
-void sys_sched_remove_ready(uint32 env){
-	cprintf("sys_sched_remove_ready: Called with env address: %x\n", env);
-	struct Env* e = (struct Env*) env;
-	cprintf("changing status\n");
-	e->env_status = ENV_READY;
-	cprintf("sys_sched_remove_ready: Env details - id: %d, status: %d\n", e->env_id, e->env_status);
-
+	enqueue(&sem->semdata->queue, env);
 	acquire_spinlock(&ProcessQueues.qlock);
-	cprintf("sys_sched_remove_ready: Spinlock acquired.\n");
-
-	sched_remove_ready(e);
-	cprintf("sys_sched_remove_ready: Removed env from ready queue.\n");
-	e->env_status = ENV_BLOCKED;
+	env->env_status = ENV_BLOCKED;
+	sem->semdata->lock = 0;
+	sched();
 	release_spinlock(&ProcessQueues.qlock);
-	cprintf("sys_sched_remove_ready: Spinlock released.\n");
-
-	/*popcli();
-	fos_scheduler();
-	pushcli();*/
+	cprintf("-------finished Block_and_enqueue for %s\n", sem->semdata->name);
 }
+
+void sys_Ready_and_dequeue(struct semaphore* sem){
+	cprintf("-------Ready_and_dequeue for %s\n", sem->semdata->name);
+
+	struct Env* env = dequeue(&sem->semdata->queue);
+	if (env != NULL) {
+		acquire_spinlock(&ProcessQueues.qlock);
+		env->env_status = ENV_READY;
+		sched_insert_ready(env);
+		release_spinlock(&ProcessQueues.qlock);
+	}
+
+	cprintf("-------finished Ready_and_dequeue for %s\n", sem->semdata->name);
+}
+
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
 {
@@ -433,7 +406,7 @@ void sys_set_uheap_strategy(uint32 heapStrategy)
 /*******************************/
 int sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
 {
-	return createSharedObject(cur_env->env_id, shareName, size, isWritable, virtual_address);
+	return createSharedObject(get_cpu_proc()->env_id, shareName, size, isWritable, virtual_address);
 }
 
 int sys_getSizeOfSharedObject(int32 ownerID, char* shareName)
@@ -599,29 +572,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 			sys_allocate_user_mem(a1,a2);
 			return 0;
 			break;
-	case SYS_init_queue:
-		sys_init_queue(a1);
-		return 0;
-		break;
-	case SYS_enqueue:
-		sys_enqueue(a1);
-		return 0;
-		break;
-	case SYS_dequeue:
-		return sys_dequeue(a1);
-		break;
-	case SYS_pushcli:
-		sys_pushcli();
-		return 0;
-		break;
-	case SYS_popcli:
-		sys_popcli();
-		return 0;
-		break;
-	case SYS_sched_remove_read:
-		sys_sched_remove_ready(a1);
-		return 0;
-		break;
+
 	//======================================================================
 	case SYS_cputs:
 		sys_cputs((const char*)a1,a2,(uint8)a3);

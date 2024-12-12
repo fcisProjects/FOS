@@ -48,6 +48,8 @@ void acquire_sleeplock(struct sleeplock *lk) {
 	    }
 
 	    lk->locked = 1;
+
+	   // lk->pid=myEnv->env_id;
 	    lk->pid=get_cpu_proc()->env_id;
 
 	    release_spinlock(&lk->lk);

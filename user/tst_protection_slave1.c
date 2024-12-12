@@ -32,6 +32,7 @@ _main(void)
 			char index[10];
 			ltostr(s, index);
 			strcconcat(initname, index, name);
+
 			vars[s] = smalloc(name, PAGE_SIZE, 1);
 			*vars[s] = s;
 		}

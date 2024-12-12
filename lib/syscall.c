@@ -268,6 +268,20 @@ void sys_set_uheap_strategy(uint32 heapStrategy)
 	return ;
 }
 
+void sys_init_queue(struct Env_Queue* queue){
+	syscall(SYS_init_queue, (uint32) &queue, 0, 0, 0, 0);
+	return ;
+}
+
+void sys_Block_and_enqueue(struct semaphore* sem){
+	syscall(SYS_Block_and_enqueue, (uint32) &sem, 0, 0, 0, 0);
+	return ;
+}
+
+void sys_Ready_and_dequeue(struct semaphore* sem){
+	syscall(SYS_Ready_and_dequeue, (uint32) &sem, 0, 0, 0, 0);
+	return ;
+}
 //2020
 int sys_check_LRU_lists(uint32* active_list_content, uint32* second_list_content, int actual_active_list_size, int actual_second_list_size)
 {
@@ -294,39 +308,6 @@ void sys_utilities(char* utilityName, int value)
 	return;
 }
 
-void sys_init_queue(uint32 queue){
-	syscall(SYS_init_queue, (uint32)queue, 0, 0, 0, 0);
-	return;
-}
-
-void sys_enqueue(uint32 queue){
-	syscall(SYS_enqueue, (uint32)queue, 0, 0, 0, 0);
-	return;
-}
-
-uint32 sys_dequeue(uint32 queue){
-	return syscall(SYS_dequeue, (uint32)queue, 0, 0, 0, 0);
-}
-
-void sys_sched_insert_ready(uint32 env){
-	syscall(SYS_Sched_Insert_Ready, (uint32)env, 0, 0, 0, 0);
-	return;
-}
-
-void sys_pushcli(){
-	syscall(SYS_pushcli, 0, 0, 0, 0, 0);
-	return;
-}
-
-void sys_popcli(){
-	syscall(SYS_popcli, 0, 0, 0, 0, 0);
-	return;
-}
-
-void sys_sched_remove_ready(uint32 env){
-	syscall( SYS_sched_remove_read,env, 0,0,0,0);
-	return;
-}
 
 //TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Implement these system calls
 void* sys_sbrk(int increment)

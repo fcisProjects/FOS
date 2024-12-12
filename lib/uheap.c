@@ -116,6 +116,7 @@ void free(void* virtual_address) {
 //=================================
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
+
 void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
@@ -127,7 +128,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 	//panic("smalloc() is not implemented yet...!!");
 
 	uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
-	cprintf(" the total frames allocated %d \n", numPages);
+//	cprintf(" the total frames allocated %d \n", numPages);
 
 	uint32 baseVA = myEnv->end + PAGE_SIZE;
 	uint32 counter = 0, start_add = 0;
@@ -150,7 +151,6 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 	}
 
 	if (start_add != 0) {
-		cprintf("in if\n");
 		int ret = sys_createSharedObject(sharedVarName, size, isWritable,
 				(void*) start_add);
 		allocPages[(start_add - USER_HEAP_START) / PAGE_SIZE].address =
@@ -160,7 +160,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 		if (ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) {
 			return NULL;
 		}
-		cprintf("(return of smalloc) object created at %u\n", start_add);
+//		cprintf("the start addr %p \n",start_add);
 		return (void*) start_add;
 	}
 

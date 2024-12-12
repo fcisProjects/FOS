@@ -115,7 +115,7 @@ int sys_check_LRU_lists_free(uint32* list_content, int list_size)
 int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 last_WS_element_content, bool chk_status)
 {
 #if USE_KHEAP
-	//	cprintf("CURRENT WS CONTENT BEFORE CHECKING:\n");
+//		cprintf("CURRENT WS CONTENT BEFORE CHECKING:\n");
 	//	env_page_ws_print(curenv);
 	struct Env* cur_env = get_cpu_proc();
 	assert(cur_env != NULL);
@@ -165,14 +165,14 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 				}
 			}
 		}
-		cprintf("index of last WS element = %d\n",idx_WS_list);
+//		cprintf("index of last WS element = %d\n",idx_WS_list);
 		//Check the expected content starting from last WS element (if any)
 		if (env->page_last_WS_element)
 			ptr_WS_element = env->page_last_WS_element;
 		else
 			ptr_WS_element = LIST_FIRST(&(env->page_WS_list));
 
-		cprintf("comparison star from va = %x\n",ptr_WS_element->virtual_address);
+//		cprintf("comparison star from va = %x\n",ptr_WS_element->virtual_address);
 
 		for (int i = 0; i < actual_WS_list_size; ++i)
 		{
@@ -228,7 +228,7 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 			}
 		}
 	}
-
+//	cprintf("CURRENT WS CONTENT AFTER CHECKING:\n");
 	return WS_list_validation;
 #else
 	panic("sys_check_WS_list: this function is intended to be used when USE_KHEAP = 1");

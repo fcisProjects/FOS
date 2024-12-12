@@ -35,11 +35,14 @@ void _main(void)
 #if USE_KHEAP
 	{
 		found = sys_check_WS_list(expectedInitialVAs, 11, 0x200000, 1);
+
 		if (found != 1) panic("INITIAL PAGE WS entry checking failed! Review size of the WS!!\n*****IF CORRECT, CHECK THE ISSUE WITH THE STAFF*****");
 	}
 #else
 	panic("make sure to enable the kernel heap: USE_KHEAP=1");
 #endif
+
+
 
 	int freePages = sys_calculate_free_frames();
 	int usedDiskPages = sys_pf_calculate_allocated_pages();

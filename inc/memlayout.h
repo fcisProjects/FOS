@@ -152,9 +152,14 @@
 // The location of the user-level STABS data structure
 #define USTABDATA	(PTSIZE / 2)
 
+#define PGFLTEMP (UTEMP - PAGE_SIZE)
 //2016
 #define KERNEL_HEAP_START 0xF6000000
 #define KERNEL_HEAP_MAX 0xFFFFF000
+
+
+
+
 //KHEAP pages number
 #define NUM_OF_KHEAP_PAGES ((KERNEL_HEAP_MAX-KERNEL_HEAP_START)/PAGE_SIZE)
 
@@ -166,7 +171,7 @@
 #define USER_PAGES_WS_MAX (USER_PAGES_WS_START + sizeof(struct WorkingSetElement) * USER_TOP/PAGE_SIZE)
 
 #define USTACKBOTTOM (ROUNDUP(USER_PAGES_WS_MAX, PAGE_SIZE))
-#define PGFLTEMP (UTEMP - PAGE_SIZE)
+
 
 //2022
 #define USER_DYN_BLKS_ARRAY 0 //(ROUNDDOWN(USER_HEAP_START - (sizeof(struct MemBlock) * NUM_OF_UHEAP_PAGES), PAGE_SIZE) - PAGE_SIZE)

@@ -177,6 +177,7 @@ void* sys_sbrk(int numOfPages) {
 struct ws_info {
     uint32 virtual_address;
 };
+
 struct ws_info ws_table[(USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE];
 
 
