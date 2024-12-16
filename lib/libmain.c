@@ -38,6 +38,7 @@ libmain(int argc, char **argv)
 		cprintf("# PAGE IN (from disk) = %d, # PAGE OUT (on disk) = %d, # NEW PAGE ADDED (on disk) = %d\n", myEnv->nPageIn, myEnv->nPageOut,myEnv->nNewPageAdded);
 		//cprintf("Num of freeing scarce memory = %d, freeing full working set = %d\n", myEnv->freeingScarceMemCounter, myEnv->freeingFullWSCounter);
 		cprintf("Num of clocks = %d\n", myEnv->nClocks);
+		cprintf("priority = %d\n",myEnv->priority);
 		cprintf("**************************************\n");
 	}
 	sys_unlock_cons();

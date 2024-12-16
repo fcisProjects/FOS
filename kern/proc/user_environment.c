@@ -584,7 +584,7 @@ int envid2env(int32 envid, struct Env **env_store, bool checkperm) {
 // Give up the CPU for one scheduling round.
 // Ref: xv6-x86 OS
 void yield(void) {
-	//cprintf("\n[YIELD] acquire: lock status before acquire = %d\n", qlock.locked);
+	//cprintf("\n[YIELD] acquire: lock status before acquire = %d\n", ProcessQueues.qlock.locked);
 	acquire_spinlock(&ProcessQueues.qlock); //lock: to protect process Qs in multi-CPU
 	{
 		struct Env* p = get_cpu_proc();
@@ -593,7 +593,7 @@ void yield(void) {
 		sched();
 	}
 	release_spinlock(&ProcessQueues.qlock); ////release lock
-	//cprintf("\n[YIELD] release: lock status after release = %d\n", qlock.locked);
+	//cprintf("\n[YIELD] release: lock status after release = %d\n", ProcessQueues.qlock.locked);
 }
 
 //=================================
