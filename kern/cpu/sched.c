@@ -250,18 +250,19 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
-
+	cprintf("init PRIRR\n");
+	sched_delete_ready_queues();
 	quantums[0] = quantum;
-
 
 	sched_set_starv_thresh(starvThresh);
 
 	num_of_ready_queues = numOfPriorities;
 	ProcessQueues.env_ready_queues = kmalloc(sizeof(struct Env_Queue) * numOfPriorities);
 	for (int i = 0; i < (int) numOfPriorities; i++){
-		cprintf("made queue %d",i);
+		cprintf("\n made queue %d\n",i);
 		init_queue(&(ProcessQueues.env_ready_queues[i]));
 	}
+
 	cprintf("quantum: %d starvThresh: %d number of priorties: %d",quantums[0],starvThresh,numOfPriorities);
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
@@ -356,13 +357,11 @@ struct Env* fos_scheduler_PRIRR()
 //Your code is here
 //Comment the following line
 //panic("Not implemented yet");
+
 	struct Env* oldEnv = get_cpu_proc();
-	//acquire_spinlock(&ProcessQueues.qlock);
 	if (oldEnv != NULL)
 	{
-
 		sched_insert_ready(oldEnv);
-
 	}
 
 	struct Env* newEnv;
@@ -374,10 +373,10 @@ struct Env* fos_scheduler_PRIRR()
 			newEnv = dequeue(&(ProcessQueues.env_ready_queues[i]));
 
 			kclock_set_quantum(quantums[0]);
+			//cprintf("env id %d\n" ,newEnv->env_id);
 			return newEnv;
 		}
 	}
-	//release_spinlock(&ProcessQueues.qlock);
 	return NULL;
 }
 
@@ -387,14 +386,17 @@ struct Env* fos_scheduler_PRIRR()
 //========================================
 void clock_interrupt_handler(struct Trapframe* tf)
 {
+	//cprintf("clock interrupt handler\n");
 	if (isSchedMethodPRIRR())
 	{
 		//TODO: [PROJECT'24.MS3 - #09] [3] PRIORITY RR Scheduler - clock_interrupt_handler
 		//Your code is here
 		//Comment the following line
 		//panic("Not implemented yet");
-		struct Env* env;
+
 		acquire_spinlock(&ProcessQueues.qlock);
+		struct Env* env;
+
 		for (int i = 0; i < num_of_ready_queues; i++)
 		{
 			int size = queue_size(&ProcessQueues.env_ready_queues[i]);
