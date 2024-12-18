@@ -346,32 +346,72 @@ void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms)
 	allocate_chunk(cur_env->env_page_directory, virtual_address, size, perms);
 	return;
 }
-void sys_enqueue(uint32 queue_addr) {
-    cprintf("In sys call of enqueue\n");
 
-    // Decode the integer back to a pointer
-    struct Env_Queue* queue = (struct Env_Queue*)queue_addr;
-
-    enqueue(queue, cur_env);
-    return;
-}
-void* sys_dequeue(uint32 queue_addr) {
-    cprintf("In sys call of dequeue\n");
-
-    // Decode the integer back to a pointer
-    struct Env_Queue* queue = (struct Env_Queue*)queue_addr;
-
-    return (void*)dequeue(queue);
-}
-void sys_init_queue(uint32 queue_addr){
-	cprintf("In sys call of init queue\n");
-
-	// Decode the integer back to a pointer
-	struct Env_Queue* queue = (struct Env_Queue*) queue_addr;
-
-	init_queue(queue);
+// mike
+void sys_env_set_priority(int envID, int priority)
+{
+	env_set_priority(envID,priority);
 	return;
 }
+
+
+
+// semaphore sys calls
+
+void sys_init_queue(struct Env_Queue* queue) {
+	/*cprintf("########  sys init semaphores #######\n");
+	cprintf("Initializing queue at addr: %x\n", queue);*/
+	init_queue(queue);
+	//cprintf("@@@@@@@\t init queue size %d\n", queue->size);
+}
+
+void sys_wait_semaphore(struct __semdata** sem) {
+	/*if (sem == NULL) {
+		cprintf("\n\n `_` sem in wait was null \n\n");
+	} else {
+		cprintf("\n\n^_^ sem in wait was not null \n\n");
+		cprintf("sem addr in sys %x\n",&sem);
+	}*/
+	/*cprintf("########  sys wait semaphores #######\n");
+	cprintf("#### wait sem name %s \t queue size %d\n", (*sem)->name,
+			(*sem)->queue.size);*/
+	//cprintf(" 1) sem name %s \t  lock %d\n", (*sem)->name, (*sem)->lock);
+	struct Env* env = get_cpu_proc();
+	enqueue(&(*sem)->queue, env);
+	(*sem)->lock = 0;
+	//cprintf(" 2) sem name %s \t  lock %d\n", (*sem)->name, (*sem)->lock);
+	acquire_spinlock(&ProcessQueues.qlock);
+	env->env_status = ENV_BLOCKED;
+	sched();
+	//cprintf("sched finished \n");
+	release_spinlock(&ProcessQueues.qlock);
+	//cprintf("released successfully !! \n");
+}
+
+void sys_signal_semaphore(struct __semdata** sem) {
+	/*if (sem == NULL) {
+		cprintf("\n\n `_` sem in signal was null \n\n");
+		cprintf("sem addr in sys %x\n",&sem);
+	}else{
+		cprintf("\n\n ^_^ sem in signal was not null \n\n");
+	}*/
+	/*cprintf("########  sys signal semaphores #######\n");
+	cprintf("#### signal sem name %s \t queue size %d\n", (*sem)->name,
+			(*sem)->queue.size);*/
+	struct Env* env = dequeue(&(*sem)->queue);
+	if (env != NULL) {
+		acquire_spinlock(&ProcessQueues.qlock);
+		env->env_status = ENV_READY;
+		sched_insert_ready(env);
+		release_spinlock(&ProcessQueues.qlock);
+	} else {
+		panic("dequeue env was null");
+	}
+}
+
+
+
+
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
 {
@@ -549,7 +589,6 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	uint32 * x;
-	uint32 * env;
 	switch(syscallno)
 	{
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
@@ -567,14 +606,27 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 			sys_allocate_user_mem(a1,a2);
 			return 0;
 			break;
-	case SYS_enqueue:
-		sys_enqueue(a1);
-		return 0;
-		break;
-	case SYS_dequeue:
-		env = (uint32 *)sys_dequeue(a1);
-		return (uint32)env;
-		break;
+
+	case SYS_env_set_priority:
+		    sys_env_set_priority(a1,a2);
+				return 0;
+				break;
+
+	// semaphore calls
+	case SYS_init_queue:
+			sys_init_queue((struct Env_Queue*) a1);
+			return 0;
+			break;
+	case SYS_wait_Semaphore:
+			sys_wait_semaphore((struct __semdata**) a1);
+			return 0;
+			break;
+	case SYS_signal_Semaphore:
+			sys_signal_semaphore((struct __semdata**) a1);
+			return 0;
+			break;
+
+
 	//======================================================================
 	case SYS_cputs:
 		sys_cputs((const char*)a1,a2,(uint8)a3);

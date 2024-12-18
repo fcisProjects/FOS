@@ -26,7 +26,7 @@ int cons_getc2(void);
 
 /*2024*/
 
-#define CONS_LCK_METHOD LCK_SLEEP		//Specify the method of LOCK to protect the console
+#define CONS_LCK_METHOD LCK_SLEEP			//Specify the method of LOCK to protect the console
 void cons_lock(void);					//lock the console so that no other processes can deal with it (either read from KB or print no screen)
 void cons_unlock(void);					//unlock the console so that other processes can deal with it
 struct sleeplock conslock;				//sleeplock to protect the console

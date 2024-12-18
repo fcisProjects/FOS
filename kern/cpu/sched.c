@@ -16,6 +16,7 @@ uint32 isSchedMethodRR(){return (scheduler_method == SCH_RR);}
 uint32 isSchedMethodMLFQ(){return (scheduler_method == SCH_MLFQ); }
 uint32 isSchedMethodBSD(){return(scheduler_method == SCH_BSD); }
 uint32 isSchedMethodPRIRR(){return(scheduler_method == SCH_PRIRR); }
+struct spinlock lk;
 
 //===================================================================================//
 //============================ SCHEDULER FUNCTIONS ==================================//
@@ -249,16 +250,21 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//TODO: [PROJECT'24.MS3 - #07] [3] PRIORITY RR Scheduler - sched_init_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+	cprintf("init PRIRR\n");
+	sched_delete_ready_queues();
+	quantums[0] = quantum;
 
+	sched_set_starv_thresh(starvThresh);
 
+	num_of_ready_queues = numOfPriorities;
+	ProcessQueues.env_ready_queues = kmalloc(sizeof(struct Env_Queue) * numOfPriorities);
+	for (int i = 0; i < (int) numOfPriorities; i++){
+		cprintf("\n made queue %d\n",i);
+		init_queue(&(ProcessQueues.env_ready_queues[i]));
+	}
 
-
-
-
-
-
-
+	cprintf("quantum: %d starvThresh: %d number of priorties: %d",quantums[0],starvThresh,numOfPriorities);
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	uint16 cnt0 = kclock_read_cnt0_latch() ; //read after write to ensure it's set to the desired value
@@ -344,14 +350,46 @@ struct Env* fos_scheduler_BSD()
 struct Env* fos_scheduler_PRIRR()
 {
 	/*To protect process Qs (or info of current process) in multi-CPU************************/
-	if(!holding_spinlock(&ProcessQueues.qlock))
-		panic("fos_scheduler_PRIRR: q.lock is not held by this CPU while it's expected to be.");
+	if (!holding_spinlock(&ProcessQueues.qlock))
+		panic(
+				"fos_scheduler_PRIRR: q.lock is not held by this CPU while it's expected to be.");
 	/****************************************************************************************/
 	//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+
+    struct Env* oldEnv = get_cpu_proc();
+
+    if (oldEnv != NULL) {
+        sched_insert_ready(oldEnv);
+    }
+
+    struct Env* e;
+    int s = queue_size(&(ProcessQueues.env_ready_queues[0]));
+    /*for(int i=0;i<s;i++){
+    	e=dequeue(&(ProcessQueues.env_ready_queues[0]));
+    	cprintf("\nenvID: %d", e->env_id);
+    	enqueue(&(ProcessQueues.env_ready_queues[0]),e);
+    }
+*/
+    struct Env* newEnv = NULL;
+
+    for (int i = 0; i < num_of_ready_queues; i++) {
+        if (queue_size(&(ProcessQueues.env_ready_queues[i])) > 0) {
+            newEnv = dequeue(&(ProcessQueues.env_ready_queues[i]));
+            //cprintf("\nSelected envID: %d, priority: %d, starvThresh: %d\n", newEnv->env_id, newEnv->priority, newEnv->count);
+            break;
+        }
+    }
+
+    if (newEnv != NULL) {
+        kclock_set_quantum(quantums[0]);
+    }
+
+    return newEnv;
 }
+
 
 //========================================
 // [11] Clock Interrupt Handler
@@ -364,7 +402,37 @@ void clock_interrupt_handler(struct Trapframe* tf)
 		//TODO: [PROJECT'24.MS3 - #09] [3] PRIORITY RR Scheduler - clock_interrupt_handler
 		//Your code is here
 		//Comment the following line
-		panic("Not implemented yet");
+		//panic("Not implemented yet");
+		 struct Env* env;
+		 //acquire_spinlock(&lk);
+		        acquire_spinlock(&ProcessQueues.qlock);
+				 struct Env* curEnv= get_cpu_proc();
+
+
+		        for (int i = 0; i < num_of_ready_queues; i++) {
+		            int size = queue_size(&ProcessQueues.env_ready_queues[i]);
+
+		            for (int j = 0; j < size; j++) {
+		                env = dequeue(&(ProcessQueues.env_ready_queues[i]));
+		                if(curEnv!=env)
+		                	env->count++;
+		                //cprintf("\n 1) envID: %d, new priority: %d, threshold: %d/%d\n",env->env_id, env->priority, env->count, threshold);
+		                if (env->count >= threshold) {
+		                    if (env->priority > 0) {
+		                        env->priority--;
+		                        cprintf("\n Promoted envID: %d, new priority: %d, threshold: %d/%d\n",
+		                                env->env_id, env->priority, env->count, threshold);
+		                        env->count = 0;
+
+		                    }
+		                }
+		                //cprintf("\n 2) envID: %d, new priority: %d, threshold: %d/%d\n",env->env_id, env->priority, env->count, threshold);
+		                enqueue(&ProcessQueues.env_ready_queues[env->priority],env);
+		            }
+		        }
+		        release_spinlock(&ProcessQueues.qlock);
+		       // release_spinlock(&lk);
+
 	}
 
 
@@ -388,6 +456,7 @@ void clock_interrupt_handler(struct Trapframe* tf)
 	}
 	/*****************************************/
 }
+
 
 //===================================================================
 // [9] Update LRU Timestamp of WS Elements

@@ -40,16 +40,16 @@ void sleep(struct Channel *chan, struct spinlock* lk)
 	acquire_spinlock(&ProcessQueues.qlock);
 	release_spinlock(lk);
 
-
 	cur_env->env_status=ENV_BLOCKED;
 	enqueue(&chan->queue, cur_env);
 
 	sched();
 
-	release_spinlock(&ProcessQueues.qlock);
+	//cprintf("\nenvID: %d\n",cur_env->env_id);
 
 
 	acquire_spinlock(lk);
+	release_spinlock(&ProcessQueues.qlock);
 
 
 
@@ -73,7 +73,7 @@ void wakeup_one(struct Channel *chan)
 
 	if(chan->queue.size>0){
 		struct Env* env = dequeue(&(chan->queue));
-		sched_insert_ready0(env);
+		sched_insert_ready(env);
 	}
 
 	release_spinlock(&ProcessQueues.qlock);
@@ -100,7 +100,7 @@ void wakeup_all(struct Channel *chan)
 
 	for (int i = 0; i < chanSize; i++) {
 		struct Env* env = dequeue(&(chan->queue));
-		sched_insert_ready0(env);
+		sched_insert_ready(env);
 	}
 
 	release_spinlock(&ProcessQueues.qlock);

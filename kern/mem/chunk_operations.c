@@ -141,6 +141,9 @@ void* sys_sbrk(int numOfPages) {
 
 
 	struct Env* env = get_cpu_proc();
+	//env_free(env);
+//	cprintf("finish");
+//	return (void*)-1;
 
 	if (numOfPages == 0) {
 		return (void*) env->brk;
@@ -155,8 +158,6 @@ void* sys_sbrk(int numOfPages) {
 //		cprintf("the value is %p\n", (void *)(long)(-1));
 
 		return ((void*)-1);
-//		return (void *)(long)(-1);
-//		return NULL;
 
 	}
 
@@ -177,6 +178,7 @@ void* sys_sbrk(int numOfPages) {
 struct ws_info {
     uint32 virtual_address;
 };
+
 struct ws_info ws_table[(USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE];
 
 
@@ -185,78 +187,174 @@ struct ws_info ws_table[(USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE];
 // 1) ALLOCATE USER MEMORY:
 //=====================================
 void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
-	/*====================================*/
-	/*Remove this line before start coding*/
-//	inctst();
-//	return;
-	/*====================================*/
+	/*====================================/
+	 /Remove this line before start coding/
+	 //	inctst();
+	 //	return;
+	 /====================================*/
 
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
 	//panic("allocate_user_mem() is not implemented yet...!!");
+//	cprintf("in allocate_user_mem\n");
 	uint32 perm_mark = 0x400;
-	uint32 numOfPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
 
+	uint32 numOfPages = ROUNDUP(size,PAGE_SIZE) / PAGE_SIZE;
+//	cprintf("sizeToAllocate %d\n",numOfPages);
 	for (uint32 i = 0; i < numOfPages; i++) {
-		uint32 current_va = virtual_address + i * PAGE_SIZE;
+		uint32 currAddress = virtual_address + i * PAGE_SIZE;
 		uint32 *page_table;
 
-		int ret = get_page_table(e->env_page_directory, current_va,
-				&page_table);
-		if (ret == TABLE_NOT_EXIST || page_table == NULL) {
-			page_table = (uint32*) create_page_table(e->env_page_directory,
-					current_va);
+		int x = get_page_table(e->env_page_directory, currAddress, &page_table);
+
+		if (x == TABLE_NOT_EXIST) {
+
+			page_table = (uint32 *) create_page_table(e->env_page_directory,
+					currAddress);
+
 		}
 
-		page_table[PTX(current_va)] |= perm_mark;
-
-		uint32 index = (current_va - USER_HEAP_START) / PAGE_SIZE;
-		ws_table[index].virtual_address = current_va;
+		page_table[PTX(virtual_address+i*PAGE_SIZE)] = page_table[PTX(
+				currAddress)] | (perm_mark);
 
 	}
-}
+	/*uint32 q=0x800fe000;
+	 if (e->brk == q) {
+	 for (uint32 i = 0; i < numOfPages; i++) {
+	 uint32 *page_table;
 
+	 int x = get_page_table(e->env_page_directory,
+	 virtual_address + i * PAGE_SIZE, &page_table);
+
+	 cprintf("addd %p\n", virtual_address + i * PAGE_SIZE);
+
+	 cprintf("entryyy %d \n",
+	 page_table[PTX(virtual_address+i*PAGE_SIZE)]);
+
+	 }
+	 }*/
+}
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
+
 void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
-	/*====================================*/
-	/*Remove this line before start coding*/
-//	inctst();
-//	return;
-	/*====================================*/
+	/*====================================/
+	 /Remove this line before start coding/
+	 //	inctst();
+	 //	return;
+	 /====================================*/
 
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
 	//panic("free_user_mem() is not implemented yet...!!");
+
+//	cprintf("the size of ws is %d\n", LIST_SIZE(&e->page_WS_list));
+//	env_page_ws_print(e);
+//	e->page_last_WS_element = LIST_LAST(&e->page_WS_list);
+//	for (int i = 0; i <= 270; i++) {
+//		e->page_last_WS_element = LIST_NEXT(e->page_last_WS_element);
+//	}
+
+//	env_page_ws_print(e);
+	/// must removeeee
+
 	uint32 pages_num = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
 	uint32 perm_mark = 0x400;
+	uint32 bool = 0, bool2 = 0;
+	if (e->page_last_WS_element != NULL) {
+		bool = 1;
+	}
 
-	for (uint32 i = 0; i < pages_num; ++i) {
-		uint32 current_va = virtual_address + i * PAGE_SIZE;
-
+	for (int i = 0; i < pages_num; ++i) {
 		uint32 *page_table;
-		int ret = get_page_table(e->env_page_directory, current_va,
+		int x = get_page_table(e->env_page_directory, virtual_address,
 				&page_table);
-		if (ret == TABLE_NOT_EXIST || page_table == NULL) {
-			continue;
-		}
+		if (page_table != NULL) {
+			page_table[PTX(virtual_address)] = page_table[PTX(virtual_address)]
+					& (~perm_mark);
+			//virtual_address = virtual_address & (~perm_mark);
+			pf_remove_env_page(e, virtual_address);
+			struct WorkingSetElement* w;
+			LIST_FOREACH(w,&(e->page_WS_list))
+			{
+				if (ROUNDDOWN(w->virtual_address,
+						PAGE_SIZE) == ROUNDDOWN(virtual_address,PAGE_SIZE)) {
+					if (w == e->page_last_WS_element) {
+						if (w == LIST_LAST(&e->page_WS_list)) {
+							e->page_last_WS_element = LIST_FIRST(
+									&e->page_WS_list);
+						} else {
+							e->page_last_WS_element = LIST_NEXT(w);
+						}
+					}
+					env_page_ws_invalidate(e, virtual_address);
+					bool2 = 1;
+				}
+			}
 
-		page_table[PTX(current_va)] &= (~perm_mark);
-
-		pf_remove_env_page(e, current_va);
-
-
-		uint32 index = (current_va - USER_HEAP_START) / PAGE_SIZE;
-		if (ws_table[index].virtual_address == current_va) {
-
-			unmap_frame(e->env_page_directory, current_va);
-			env_page_ws_invalidate(e, current_va);
-
-			ws_table[index].virtual_address = 0;
+			virtual_address += PAGE_SIZE;
 		}
 	}
+//	env_page_ws_invalidate(e, 0x82d087fe);
+
+//	for (uint32 i = 0; i < pages_num; ++i) {
+//		uint32 current_va = virtual_address + i * PAGE_SIZE;
+//
+//		uint32 *page_table;
+//		int ret = get_page_table(e->env_page_directory, current_va,
+//				&page_table);
+//		if (ret == TABLE_NOT_EXIST || page_table == NULL) {
+//			continue;
+//		}
+//
+//		page_table[PTX(current_va)] &= (~perm_mark);
+//
+//		pf_remove_env_page(e, current_va);
+////		uint32 index = (current_va - USER_HEAP_START) / PAGE_SIZE;
+////		if (ws_table[index].virtual_address == current_va) {
+////
+////			unmap_frame(e->env_page_directory, current_va);
+////
+////			env_page_ws_invalidate(e, current_va);
+////
+////			ws_table[index].virtual_address = 0;
+////		}
+//
+//		struct WorkingSetElement *w = NULL;
+//		LIST_FOREACH(w,&e->page_WS_list)
+//		{
+//			if (w->virtual_address == current_va) {
+//				cprintf("------------------------------------1\n\n");
+//				if (w == e->page_last_WS_element) {
+//					if (w == LIST_LAST(&e->page_WS_list)) {
+//						e->page_last_WS_element = LIST_FIRST(&e->page_WS_list);
+//					} else {
+//						e->page_last_WS_element = LIST_NEXT(w);
+//					}
+//				}
+//				env_page_ws_invalidate(e, current_va);
+//				bool2 = 1;
+//			}
+//		}
+//	}
+	if (bool && bool2) {
+		while (LIST_FIRST(&e->page_WS_list) != e->page_last_WS_element) {
+			struct WorkingSetElement* w = LIST_FIRST(&e->page_WS_list);
+
+			LIST_REMOVE(&e->page_WS_list, w);
+
+			LIST_INSERT_TAIL(&e->page_WS_list, w);
+
+//		    env_page_ws_print(e);
+		}
+
+		e->page_last_WS_element=NULL;
+
+	}
+//	env_page_ws_print(e);
 }
+
 
 //=====================================
 // 2) FREE USER MEMORY (BUFFERING):

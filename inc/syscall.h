@@ -49,12 +49,17 @@ enum
 	SYS_utilities,
 	/*2024*/
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
-	SYS_enqueue,
-	SYS_dequeue,
-	SYS_init_Queue,
+
 	SYS_sbrk,
 	SYS_free_user_mem,
 	SYS_allocate_user_mem,
+
+	SYS_init_queue,
+	SYS_wait_Semaphore,
+	SYS_signal_Semaphore,
+
+//mike
+	SYS_env_set_priority,
 	//=====================================================================
 	NSYSCALLS
 };

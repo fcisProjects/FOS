@@ -69,7 +69,7 @@ void release_sleeplock(struct sleeplock* lk)
 
     acquire_spinlock(&lk->lk);
 
-    if (lk->chan.queue.size != 0) {
+    if (lk->chan.queue.size > 0) {
         wakeup_all(&lk->chan);
     }
 

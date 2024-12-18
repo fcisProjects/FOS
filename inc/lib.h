@@ -72,9 +72,6 @@ void* 	sys_sbrk(int increment);
 //User Heap
 void 	sys_free_user_mem(uint32 virtual_address, uint32 size);
 void	sys_allocate_user_mem(uint32 virtual_address, uint32 size);
-void	sys_enqueue(uint32 queue_addr);
-void*	sys_dequeue(uint32 queue_addr);
-void	sys_init_queue(uint32 queue_addr);
 void	sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms);
 void 	sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size);
 uint32 	sys_isUHeapPlacementStrategyFIRSTFIT();
@@ -82,6 +79,13 @@ uint32 	sys_isUHeapPlacementStrategyBESTFIT();
 uint32 	sys_isUHeapPlacementStrategyNEXTFIT();
 uint32 	sys_isUHeapPlacementStrategyWORSTFIT();
 void 	sys_set_uheap_strategy(uint32 heapStrategy);
+
+
+
+//for semaphore calls
+void sys_init_queue(struct Env_Queue* queue);
+void sys_signal_semaphore(struct __semdata** sem);
+void sys_wait_semaphore(struct __semdata** sem);
 
 //Page File
 int 	sys_pf_calculate_allocated_pages(void);

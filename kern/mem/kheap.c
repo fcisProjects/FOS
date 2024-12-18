@@ -3,6 +3,8 @@
 #include <inc/memlayout.h>
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
+#include "../conc/sleeplock.h"
+#include "../proc/user_environment.h"
 
 //Initialize the dynamic allocator of kernel heap with the given start address, size & limit
 //All pages in the given range should be allocated
@@ -10,6 +12,9 @@
 //Return:
 //	On success: 0
 //	Otherwise (if no memory OR initial size exceed the given limit): PANIC
+
+struct spinlock keralLock;
+
 int initialize_kheap_dynamic_allocator(uint32 daStart,
 		uint32 initSizeToAllocate, uint32 daLimit) {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
@@ -44,6 +49,8 @@ int initialize_kheap_dynamic_allocator(uint32 daStart,
 		PERM_WRITEABLE | PERM_PRESENT);
 	}
 
+	init_spinlock(&keralLock, "kernal Lock");
+
 	initialize_dynamic_allocator(daStart, initSizeToAllocate);
 
 	return 0;
@@ -67,7 +74,6 @@ void* sbrk(int numOfPages) {
 	//[PROJECT'24.MS2] Implement this function
 	// Write your code here, remove the panic and write your code
 	//panic("sbrk() is not implemented yet...!!");
-
 	if (numOfPages == 0) {
 		//cprintf("0\n");
 		return (void*) brk;
@@ -126,16 +132,26 @@ void* kmalloc(unsigned int size) {
 // use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
 	isKHeapPlacementStrategyFIRSTFIT();
 
-	//cprintf("in kmalloc\n");
+//	cprintf("in kmalloc\n");
+	struct Env *myEnv = get_cpu_proc();
+	if (myEnv)
+		acquire_spinlock(&keralLock);
 
 	if (size > DYN_ALLOC_MAX_SIZE) {
+		if (myEnv != NULL)
+			release_spinlock(&keralLock);
 		return NULL;
 	} else if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 //		cprintf("will alloc in dynamic\n");
-		return alloc_block_FF(size);
+		uint32 *x = (uint32 *) alloc_block_FF(size);
+		if (myEnv != NULL)
+			release_spinlock(&keralLock);
+
+		return (void*) x;
 	}
 	uint32 numPages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
 	//cprintf("num of pages %d\n", numPages);
+
 	uint32 baseVA = end + PAGE_SIZE;
 	uint32 allocatedVA = 0;
 	uint32 bool = 0;
@@ -180,6 +196,8 @@ void* kmalloc(unsigned int size) {
 
 			if (allocResult != 0) {
 				cprintf("kmalloc: Out of memory during allocation\n");
+				if (myEnv != NULL)
+					release_spinlock(&keralLock);
 				return NULL;
 			}
 
@@ -193,7 +211,9 @@ void* kmalloc(unsigned int size) {
 //					x);
 
 			if (mapResult != 0) {
-//				cprintf("kmalloc: Failed to map frame at VA %x\n", start_add);
+				cprintf("kmalloc: Failed to map frame at VA %x\n", start_add);
+				if (myEnv != NULL)
+					release_spinlock(&keralLock);
 				return NULL;
 			}
 			start_add = start_add + PAGE_SIZE;
@@ -204,11 +224,17 @@ void* kmalloc(unsigned int size) {
 				allocatedVA, &ptr_table);
 		new_frame->va = allocatedVA;
 		new_frame->numOfPages = numPages;
-//		cprintf(" in kmalloc va %x\n",allocatedVA);
+//		if (myEnv != NULL)
+//		cprintf(" in kmalloc va %x  and env id is %d\n",allocatedVA,myEnv->env_id);
+
 //		cprintf("p a %x\n",kheap_physical_address(allocatedVA));
+		if (myEnv != NULL)
+			release_spinlock(&keralLock);
 		return (void*) allocatedVA;
 
 	}
+	if (myEnv != NULL)
+		release_spinlock(&keralLock);
 	return NULL;
 }
 
@@ -217,16 +243,25 @@ void kfree(void* virtual_address) {
 //TODO: [PROJECT'24.MS2 - #04] [1] KERNEL HEAP - kfree
 // Write your code here, remove the panic and write your code
 //panic("kfree() is not implemented yet...!!");
-//cprintf("will free va %x",virtual_address);
+
+//	cprintf("will free va %x",virtual_address);
+
+	struct Env *myEnv = get_cpu_proc();
+
 	if (virtual_address == 0) {
-		//cprintf("size is zero \n");
+
 		return;
-		free_block(virtual_address);
+
 	}
+
+	if (myEnv)
+		acquire_spinlock(&keralLock);
+
 	if (virtual_address >= (void*) KERNEL_HEAP_START
 			&& virtual_address < (void*) end) {		// hard limit
 			//	cprintf("will call free block allocator \n");
 		free_block(virtual_address);
+
 	}
 
 	else if (virtual_address >= (void*) end + PAGE_SIZE
@@ -251,6 +286,8 @@ void kfree(void* virtual_address) {
 	} else {
 		panic("kfree() invalid address...!!");
 	}
+	if (myEnv != NULL)
+		release_spinlock(&keralLock);
 
 }
 
@@ -354,5 +391,5 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 		}
 
 	}
-return (void*)NULL;
+	return (void*) NULL;
 }
