@@ -325,19 +325,18 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	syscall(SYS_env_set_priority,envID,priority,0,0,0);
 }
 
+ //semaphore calls
+  void sys_init_queue(struct Env_Queue* queue){
+  	syscall(SYS_init_queue, (uint32) &queue, 0, 0, 0, 0);
+  	return ;
+  }
 
-//semaphore calls
- void sys_init_queue(struct Env_Queue* queue){
- 	syscall(SYS_init_queue, (uint32) &queue, 0, 0, 0, 0);
- 	return ;
- }
+  void sys_wait_semaphore(struct __semdata** sem){
+  	syscall(SYS_wait_Semaphore, (uint32) &(*sem), 0, 0, 0, 0);
+  	return ;
+  }
 
- void sys_wait_semaphore(struct __semdata** sem){
- 	syscall(SYS_wait_Semaphore, (uint32) &(*sem), 0, 0, 0, 0);
- 	return ;
- }
-
- void sys_signal_semaphore(struct __semdata** sem){
- 	syscall(SYS_signal_Semaphore, (uint32) &(*sem), 0, 0, 0, 0);
- 	return ;
- }
+  void sys_signal_semaphore(struct __semdata** sem){
+  	syscall(SYS_signal_Semaphore, (uint32) &(*sem), 0, 0, 0, 0);
+  	return ;
+  }
