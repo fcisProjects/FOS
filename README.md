@@ -71,10 +71,10 @@ This milestone introduces advanced CPU functionalities.
 
 ---
 ### Project team contributors 
-Abanoub Saweris 
-Yousef Osama 
-Hager Hessin 
-Hager Sherif 
-Youstina Mitcho
-Micheal Nabil
+- Abanoub Saweris. 
+- Yousef Osama.
+- Hager Hessin.
+- Hager Sherif.
+- Youstina Mitcho.
+- Micheal Nabil.
 
